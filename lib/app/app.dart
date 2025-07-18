@@ -1,26 +1,27 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart'
-    show ThemeMode, DefaultMaterialLocalizations, Brightness, Colors;
+    show ThemeMode, DefaultMaterialLocalizations;
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import 'routes/app_router.dart';
+import '../core//theme//app_theme.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
+  // Set desired color scheme here
+  static const String colorSchemeName = 'blue';
 
   @override
   Widget build(BuildContext context) {
     return ShadApp.custom(
       themeMode: ThemeMode.system,
-      theme: ShadThemeData(
-        brightness: Brightness.light,
-        colorScheme: const ShadSlateColorScheme.light(),
+      theme: AppTheme.lightTheme(colorSchemeName).copyWith(
+        textTheme: ShadTextTheme.fromGoogleFont(GoogleFonts.poppins),
       ),
-      darkTheme: ShadThemeData(
-        brightness: Brightness.dark,
-        colorScheme: const ShadSlateColorScheme.dark(
-          background: Colors.black, // Pure black background
-          card: Color(0xFF1a1a1a), // Dark gray for cards
-        ),
+      darkTheme: AppTheme.darkTheme(colorSchemeName).copyWith(
+        textTheme: ShadTextTheme.fromGoogleFont(GoogleFonts.poppins),
       ),
       appBuilder: (context) {
         return CupertinoApp.router(
