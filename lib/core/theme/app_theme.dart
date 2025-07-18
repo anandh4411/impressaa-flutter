@@ -1,57 +1,35 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Brightness;
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 class AppTheme {
-  // Light theme
-  static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.blue,
-        brightness: Brightness.light,
-      ),
-      appBarTheme: const AppBarTheme(
-        centerTitle: true,
-        elevation: 0,
-      ),
-      cardTheme: const CardThemeData(
-        elevation: 2,
-        margin: EdgeInsets.all(8),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
+  // Available color schemes from shadcn
+  static const colorSchemes = [
+    'blue',
+    'gray',
+    'green',
+    'neutral',
+    'orange',
+    'red',
+    'rose',
+    'slate',
+    'stone',
+    'violet',
+    'yellow',
+    'zinc'
+  ];
+
+  static ShadThemeData lightTheme(String colorName) {
+    return ShadThemeData(
+      brightness: Brightness.light,
+      colorScheme: ShadColorScheme.fromName(colorName),
     );
   }
 
-  // Dark theme
-  static ThemeData get darkTheme {
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.blue,
-        brightness: Brightness.dark,
-      ),
-      appBarTheme: const AppBarTheme(
-        centerTitle: true,
-        elevation: 0,
-      ),
-      cardTheme: const CardThemeData(
-        elevation: 2,
-        margin: EdgeInsets.all(8),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
+  static ShadThemeData darkTheme(String colorName) {
+    return ShadThemeData(
+      brightness: Brightness.dark,
+      colorScheme:
+          ShadColorScheme.fromName(colorName, brightness: Brightness.dark),
     );
   }
 }

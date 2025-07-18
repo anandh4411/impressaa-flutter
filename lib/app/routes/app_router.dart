@@ -1,46 +1,53 @@
+import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/material.dart';
+import '../../features/../features/auth/auth_page.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/login',
     routes: [
       GoRoute(
-        path: '/home',
-        builder: (context, state) => const HomePage(),
+        path: '/login',
+        builder: (context, state) => const LoginPage(),
       ),
       GoRoute(
-        path: '/auth',
-        builder: (context, state) => const AuthPage(),
+        path: '/form',
+        builder: (context, state) => const FormPage(),
       ),
     ],
   );
 }
 
-// Temporary placeholder pages - we'll replace these with proper pages
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+// // Cupertino-style placeholder pages
+// class LoginPage extends StatelessWidget {
+//   const LoginPage({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return const CupertinoPageScaffold(
+//       navigationBar: CupertinoNavigationBar(
+//         middle: Text('Login'),
+//         border: null,
+//       ),
+//       child: Center(
+//         child: Text('Login with verification code'),
+//       ),
+//     );
+//   }
+// }
+
+class FormPage extends StatelessWidget {
+  const FormPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
-      body: const Center(
-        child: Text('Welcome to Impressaa!'),
+    return const CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        middle: Text('ID Card Form'),
+        border: null,
       ),
-    );
-  }
-}
-
-class AuthPage extends StatelessWidget {
-  const AuthPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Auth')),
-      body: const Center(
-        child: Text('Authentication Page'),
+      child: Center(
+        child: Text('Form submission page'),
       ),
     );
   }
