@@ -78,6 +78,7 @@ Lists active devices (emulators/simulators) for running the app.
    Or, run individually:
    ```bash
    flutter run -d Medium_Phone_API_35
+   flutter run -d "SM M346B"
    flutter run -d <ios_simulator_id>
    ```
    Replace `<ios_simulator_id>` with the simulator name or UUID from `flutter devices`.
