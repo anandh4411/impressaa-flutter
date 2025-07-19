@@ -1,13 +1,10 @@
 abstract class AuthEvent {}
 
-class VerifyCodeSubmitted extends AuthEvent {
+class AuthCodeChanged extends AuthEvent {
   final String code;
-
-  VerifyCodeSubmitted(this.code);
+  AuthCodeChanged(this.code);
 }
 
-class CodeChanged extends AuthEvent {
-  final String code;
+class AuthSubmitted extends AuthEvent {}
 
-  CodeChanged(this.code);
-}
+class AuthReset extends AuthEvent {}

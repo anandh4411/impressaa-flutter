@@ -8,7 +8,7 @@ class AppRouter {
     routes: [
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginPage(),
+        builder: (context, state) => const AuthPage(),
       ),
       GoRoute(
         path: '/form',
