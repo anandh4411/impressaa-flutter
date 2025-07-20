@@ -64,7 +64,8 @@ class DynamicFormField extends StatelessWidget {
     return ShadSelectFormField<String>(
       id: field.id,
       label: Text(field.label),
-      placeholder: field.placeholder != null ? Text(field.placeholder!) : null,
+      placeholder: Text(field.placeholder ??
+          'Select ${field.label}'), // Always provide placeholder
       description: field.helpText != null ? Text(field.helpText!) : null,
       selectedOptionBuilder: (context, value) => Text(value),
       options: field.options

@@ -155,7 +155,7 @@ class _FormPageViewState extends State<_FormPageView> {
       {Map<String, String>? validationErrors}) {
     return Column(
       children: [
-        // Form Header
+        // Form Header (optional description)
         if (state.formConfig.description != null)
           Container(
             width: double.infinity,
@@ -168,7 +168,7 @@ class _FormPageViewState extends State<_FormPageView> {
             ),
           ),
 
-        // Form Content
+        // Scrollable Form Content (including buttons)
         Expanded(
           child: SingleChildScrollView(
             controller: scrollController,
@@ -178,6 +178,7 @@ class _FormPageViewState extends State<_FormPageView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Form Fields
                   ...state.formConfig.fields.map(
                     (field) => Padding(
                       padding: const EdgeInsets.only(bottom: 20),
@@ -194,44 +195,32 @@ class _FormPageViewState extends State<_FormPageView> {
                       ),
                     ),
                   ),
+
+                  // Spacing before buttons
                   const SizedBox(height: 32),
+
+                  // Action Buttons (now part of scrollable content)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ShadButton(
+                      onPressed: () => _handlePreview(state),
+                      child: const Text('Preview Form'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ShadButton.outline(
+                      onPressed: () => _handleSaveDraft(state),
+                      child: const Text('Save as Draft'),
+                    ),
+                  ),
+
+                  // Extra bottom padding for safe area
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
-          ),
-        ),
-
-        // Bottom Actions
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: ShadTheme.of(context).colorScheme.background,
-            border: Border(
-              top: BorderSide(
-                color: ShadTheme.of(context).colorScheme.border,
-                width: 1,
-              ),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: ShadButton(
-                  onPressed: () => _handlePreview(state),
-                  child: const Text('Preview Form'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ShadButton.outline(
-                  onPressed: () => _handleSaveDraft(state),
-                  child: const Text('Save as Draft'),
-                ),
-              ),
-            ],
           ),
         ),
       ],
