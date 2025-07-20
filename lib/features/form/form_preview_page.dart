@@ -169,7 +169,7 @@ class FormPreviewPage extends StatelessWidget {
             TextButton(
               onPressed: () {
                 // Navigate back to auth page or home
-                context.go('/');
+                context.go('/form');
               },
               child: const Text('OK'),
             ),

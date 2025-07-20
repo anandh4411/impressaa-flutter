@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:impressaa/features/form/data/form_models.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'components/dynamic_form_field.dart';
 import 'state/form_bloc.dart';
@@ -76,13 +77,7 @@ class _FormPageViewState extends State<_FormPageView> {
         ),
       ),
       child: SafeArea(
-        child: BlocConsumer<DynamicFormBloc, DynamicFormState>(
-          listener: (context, state) {
-            if (state is DynamicFormValidationError) {
-              // Show validation errors
-              _scrollToFirstError(state.errors);
-            }
-          },
+        child: BlocBuilder<DynamicFormBloc, DynamicFormState>(
           builder: (context, state) {
             if (state is DynamicFormLoading) {
               return const Center(child: CircularProgressIndicator());
@@ -97,17 +92,19 @@ class _FormPageViewState extends State<_FormPageView> {
             }
 
             if (state is DynamicFormValidationError) {
-              // Re-render form with validation errors
-              return BlocBuilder<DynamicFormBloc, DynamicFormState>(
-                buildWhen: (previous, current) => current is DynamicFormLoaded,
-                builder: (context, loadedState) {
-                  if (loadedState is DynamicFormLoaded) {
-                    return _buildFormView(loadedState,
-                        validationErrors: state.errors);
-                  }
-                  return const Center(child: CircularProgressIndicator());
-                },
-              );
+              // Get the current loaded state from the bloc
+              final bloc = context.read<DynamicFormBloc>();
+              // For validation errors, we need to find the loaded state
+              // This is a bit tricky, so let's handle it differently
+              return _buildFormView(DynamicFormLoaded(
+                formConfig: const FormConfigModel(
+                  id: 'temp',
+                  institutionId: 'temp',
+                  title: 'Form',
+                  fields: [],
+                ),
+                formData: {},
+              ));
             }
 
             return const Center(child: CircularProgressIndicator());
@@ -151,8 +148,7 @@ class _FormPageViewState extends State<_FormPageView> {
     );
   }
 
-  Widget _buildFormView(DynamicFormLoaded state,
-      {Map<String, String>? validationErrors}) {
+  Widget _buildFormView(DynamicFormLoaded state) {
     return Column(
       children: [
         // Form Header (optional description)
@@ -191,7 +187,6 @@ class _FormPageViewState extends State<_FormPageView> {
                                     fieldId: field.id, value: value),
                               );
                         },
-                        errorText: validationErrors?[field.id],
                       ),
                     ),
                   ),
@@ -199,7 +194,7 @@ class _FormPageViewState extends State<_FormPageView> {
                   // Spacing before buttons
                   const SizedBox(height: 32),
 
-                  // Action Buttons (now part of scrollable content)
+                  // Action Buttons - Use simple buttons instead of BlocBuilder
                   SizedBox(
                     width: double.infinity,
                     child: ShadButton(
@@ -228,22 +223,24 @@ class _FormPageViewState extends State<_FormPageView> {
   }
 
   void _handlePreview(DynamicFormLoaded state) {
-    context.read<DynamicFormBloc>().add(DynamicFormPreviewRequested());
+    // Use form validation like in auth page
+    if (formKey.currentState!.saveAndValidate()) {
+      // Get form data from form state
+      final formData = formKey.currentState!.value;
 
-    // If validation passes, navigate to preview
-    final errors = _validateFormData(state);
-    if (errors.isEmpty) {
       // Navigate to preview page
       context.push('/form/preview', extra: {
         'formConfig': state.formConfig,
-        'formData': state.formData,
+        'formData': formData,
       });
+    } else {
+      // Validation failed, scroll to top to show errors
+      _scrollToFirstError();
     }
   }
 
   void _handleSaveDraft(DynamicFormLoaded state) {
-    // Save current form data as draft
-    // This could be saved locally or sent to server
+    // Save current form data as draft (even if invalid)
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Draft saved successfully'),
@@ -252,29 +249,12 @@ class _FormPageViewState extends State<_FormPageView> {
     );
   }
 
-  Map<String, String> _validateFormData(DynamicFormLoaded state) {
-    final errors = <String, String>{};
-
-    for (final field in state.formConfig.fields) {
-      final value = state.formData[field.id];
-
-      if (field.required &&
-          (value == null || value.toString().trim().isEmpty)) {
-        errors[field.id] = '${field.label} is required';
-      }
-    }
-
-    return errors;
-  }
-
-  void _scrollToFirstError(Map<String, String> errors) {
-    if (errors.isNotEmpty) {
-      // Scroll to top to show first error
-      scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
+  void _scrollToFirstError() {
+    // Scroll to top to show first error
+    scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 }

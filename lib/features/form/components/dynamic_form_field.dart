@@ -7,14 +7,12 @@ class DynamicFormField extends StatelessWidget {
   final FormFieldModel field;
   final dynamic value;
   final ValueChanged<dynamic> onChanged;
-  final String? errorText;
 
   const DynamicFormField({
     super.key,
     required this.field,
     required this.value,
     required this.onChanged,
-    this.errorText,
   });
 
   @override
@@ -45,7 +43,7 @@ class DynamicFormField extends StatelessWidget {
       keyboardType: _getKeyboardType(),
       inputFormatters: _getInputFormatters(),
       onChanged: onChanged,
-      validator: (value) => errorText,
+      validator: (value) => _validateField(value),
     );
   }
 
@@ -56,7 +54,7 @@ class DynamicFormField extends StatelessWidget {
       placeholder: field.placeholder != null ? Text(field.placeholder!) : null,
       description: field.helpText != null ? Text(field.helpText!) : null,
       onChanged: onChanged,
-      validator: (value) => errorText,
+      validator: (value) => _validateField(value),
     );
   }
 
@@ -64,8 +62,7 @@ class DynamicFormField extends StatelessWidget {
     return ShadSelectFormField<String>(
       id: field.id,
       label: Text(field.label),
-      placeholder: Text(field.placeholder ??
-          'Select ${field.label}'), // Always provide placeholder
+      placeholder: Text(field.placeholder ?? 'Select ${field.label}'),
       description: field.helpText != null ? Text(field.helpText!) : null,
       selectedOptionBuilder: (context, value) => Text(value),
       options: field.options
@@ -73,7 +70,7 @@ class DynamicFormField extends StatelessWidget {
               .toList() ??
           [],
       onChanged: onChanged,
-      validator: (value) => errorText,
+      validator: (value) => _validateField(value),
     );
   }
 
@@ -83,7 +80,7 @@ class DynamicFormField extends StatelessWidget {
       label: Text(field.label),
       description: field.helpText != null ? Text(field.helpText!) : null,
       onChanged: onChanged,
-      validator: (value) => errorText,
+      validator: (value) => _validateField(value),
     );
   }
 
@@ -127,18 +124,55 @@ class DynamicFormField extends StatelessWidget {
             ],
           ),
         ),
-        if (errorText != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            errorText!,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.red,
-            ),
-          ),
-        ],
       ],
     );
+  }
+
+  String? _validateField(dynamic value) {
+    // Required field validation
+    if (field.required && (value == null || value.toString().trim().isEmpty)) {
+      return '${field.label} is required';
+    }
+
+    // Skip further validation if field is empty and not required
+    if (value == null || value.toString().trim().isEmpty) return null;
+
+    final stringValue = value.toString();
+
+    // Length validation
+    if (field.validation?.minLength != null &&
+        stringValue.length < field.validation!.minLength!) {
+      return 'Minimum ${field.validation!.minLength} characters required';
+    }
+
+    if (field.validation?.maxLength != null &&
+        stringValue.length > field.validation!.maxLength!) {
+      return 'Maximum ${field.validation!.maxLength} characters allowed';
+    }
+
+    // Type-specific validation
+    switch (field.type) {
+      case FormFieldType.email:
+        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+            .hasMatch(stringValue)) {
+          return 'Please enter a valid email address';
+        }
+        break;
+      case FormFieldType.phone:
+        if (!RegExp(r'^\+?[\d\s\-\(\)]{10,}$').hasMatch(stringValue)) {
+          return 'Please enter a valid phone number';
+        }
+        break;
+      case FormFieldType.number:
+        if (double.tryParse(stringValue) == null) {
+          return 'Please enter a valid number';
+        }
+        break;
+      default:
+        break;
+    }
+
+    return null;
   }
 
   TextInputType _getKeyboardType() {
