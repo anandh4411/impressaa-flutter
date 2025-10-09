@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -37,6 +38,7 @@ class _FormPageView extends StatefulWidget {
 class _FormPageViewState extends State<_FormPageView> {
   final formKey = GlobalKey<ShadFormState>();
   final scrollController = ScrollController();
+  File? _capturedPhoto;
 
   @override
   void dispose() {
@@ -149,6 +151,8 @@ class _FormPageViewState extends State<_FormPageView> {
   }
 
   Widget _buildFormView(DynamicFormLoaded state) {
+    final theme = ShadTheme.of(context);
+
     return Column(
       children: [
         // Form Header (optional description)
@@ -156,10 +160,10 @@ class _FormPageViewState extends State<_FormPageView> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            color: ShadTheme.of(context).colorScheme.muted.withOpacity(0.5),
+            color: theme.colorScheme.muted.withOpacity(0.5),
             child: Text(
               state.formConfig.description!,
-              style: ShadTheme.of(context).textTheme.muted,
+              style: theme.textTheme.muted,
               textAlign: TextAlign.center,
             ),
           ),
@@ -174,6 +178,10 @@ class _FormPageViewState extends State<_FormPageView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Photo Section
+                  _buildPhotoSection(),
+                  const SizedBox(height: 24),
+
                   // Form Fields
                   ...state.formConfig.fields.map(
                     (field) => Padding(
@@ -222,8 +230,187 @@ class _FormPageViewState extends State<_FormPageView> {
     );
   }
 
+  Widget _buildPhotoSection() {
+    final theme = ShadTheme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: theme.colorScheme.border,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                CupertinoIcons.camera,
+                size: 20,
+                color: theme.colorScheme.foreground,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'ID Card Photo',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.foreground,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Required',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_capturedPhoto == null)
+            GestureDetector(
+              onTap: _openCamera,
+              child: Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.muted.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: theme.colorScheme.border,
+                    width: 1,
+                    style: BorderStyle.solid,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      CupertinoIcons.camera_fill,
+                      size: 48,
+                      color: theme.colorScheme.mutedForeground,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Tap to capture photo',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: theme.colorScheme.foreground,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Use back camera for best results',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    _capturedPhoto!,
+                    width: double.infinity,
+                    height: 200,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _openCamera,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.refresh,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _capturedPhoto = null;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.8),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.xmark,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openCamera() async {
+    final result = await context.push<File>('/form/photo');
+    if (result != null) {
+      setState(() {
+        _capturedPhoto = result;
+      });
+    }
+  }
+
   void _handlePreview(DynamicFormLoaded state) {
-    // Use form validation like in auth page
+    // Check if photo is captured
+    if (_capturedPhoto == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please capture your ID photo before proceeding'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     if (formKey.currentState!.saveAndValidate()) {
       // Get form data from form state
       final formData = formKey.currentState!.value;
@@ -232,6 +419,7 @@ class _FormPageViewState extends State<_FormPageView> {
       context.push('/form/preview', extra: {
         'formConfig': state.formConfig,
         'formData': formData,
+        'photo': _capturedPhoto,
       });
     } else {
       // Validation failed, scroll to top to show errors

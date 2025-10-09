@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -7,11 +8,13 @@ import 'data/form_models.dart';
 class FormPreviewPage extends StatelessWidget {
   final FormConfigModel formConfig;
   final Map<String, dynamic> formData;
+  final File? photo;
 
   const FormPreviewPage({
     super.key,
     required this.formConfig,
     required this.formData,
+    this.photo,
   });
 
   @override
@@ -62,6 +65,12 @@ class FormPreviewPage extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 24),
+
+                    // Photo Preview
+                    if (photo != null) ...[
+                      _buildPhotoPreview(photo!),
+                      const SizedBox(height: 24),
+                    ],
 
                     // Form Data Preview
                     ...formConfig.fields.map((field) {
@@ -116,6 +125,42 @@ class FormPreviewPage extends StatelessWidget {
     );
   }
 
+  Widget _buildPhotoPreview(File photoFile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'ID Card Photo',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.grey.shade300,
+              width: 1,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.file(
+              photoFile,
+              height: 250,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Divider(),
+      ],
+    );
+  }
+
   Widget _buildPreviewField(FormFieldModel field, dynamic value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -163,8 +208,8 @@ class FormPreviewPage extends StatelessWidget {
         barrierDismissible: false,
         builder: (context) => AlertDialog(
           title: const Text('Success!'),
-          content:
-              const Text('Your application has been submitted successfully.'),
+          content: const Text(
+              'Your application has been submitted successfully. Your ID card will be ready soon.'),
           actions: [
             TextButton(
               onPressed: () {
