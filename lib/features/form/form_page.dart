@@ -199,23 +199,15 @@ class _FormPageViewState extends State<_FormPageView> {
                     ),
                   ),
 
-                  // Spacing before buttons
+                  // Spacing before button
                   const SizedBox(height: 32),
 
-                  // Action Buttons - Use simple buttons instead of BlocBuilder
+                  // Preview Button
                   SizedBox(
                     width: double.infinity,
                     child: ShadButton(
                       onPressed: () => _handlePreview(state),
                       child: const Text('Preview Form'),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ShadButton.outline(
-                      onPressed: () => _handleSaveDraft(state),
-                      child: const Text('Save as Draft'),
                     ),
                   ),
 
@@ -392,7 +384,7 @@ class _FormPageViewState extends State<_FormPageView> {
 
   Future<void> _openCamera() async {
     final result = await context.push<File>('/form/photo');
-    if (result != null) {
+    if (result != null && mounted) {
       setState(() {
         _capturedPhoto = result;
       });
@@ -400,41 +392,58 @@ class _FormPageViewState extends State<_FormPageView> {
   }
 
   void _handlePreview(DynamicFormLoaded state) {
-    // Check if photo is captured
+    // Check if photo is captured first
     if (_capturedPhoto == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please capture your ID photo before proceeding'),
           backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
         ),
+      );
+      // Scroll to top to show photo section
+      scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
       );
       return;
     }
 
-    if (formKey.currentState!.saveAndValidate()) {
-      // Get form data from form state
-      final formData = formKey.currentState!.value;
+    // Validate the form
+    final isValid = formKey.currentState?.saveAndValidate() ?? false;
 
-      // Navigate to preview page
+    if (!isValid) {
+      // Validation failed, scroll to top to show errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all required fields correctly'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      _scrollToFirstError();
+      return;
+    }
+
+    // Get form data from form state
+    final formData = formKey.currentState?.value ?? {};
+
+    // Navigate to preview page
+    try {
       context.push('/form/preview', extra: {
         'formConfig': state.formConfig,
         'formData': formData,
         'photo': _capturedPhoto,
       });
-    } else {
-      // Validation failed, scroll to top to show errors
-      _scrollToFirstError();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Navigation error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-  }
-
-  void _handleSaveDraft(DynamicFormLoaded state) {
-    // Save current form data as draft (even if invalid)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Draft saved successfully'),
-        backgroundColor: Colors.green,
-      ),
-    );
   }
 
   void _scrollToFirstError() {
