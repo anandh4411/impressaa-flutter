@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../shared/widgets/wave_background.dart';
 import 'components/header_section.dart';
 import 'components/form_section.dart';
+import 'components/help_section.dart';
 import 'state/auth_bloc.dart';
 
 class AuthPage extends StatelessWidget {
@@ -44,6 +45,9 @@ class _AuthPageView extends StatelessWidget {
                     onSuccess: () => context.go('/form'),
                   ),
                 ),
+                const SizedBox(height: 16), // for help section
+                const HelpSection(), // for help section
+                const SizedBox(height: 8), // for help section
               ],
             ),
           ),
