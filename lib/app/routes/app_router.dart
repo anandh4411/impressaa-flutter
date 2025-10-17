@@ -9,7 +9,7 @@ import 'package:impressaa/features/form/data/form_models.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/', // CHANGE THIS from '/login' to '/'
+    initialLocation: '/form', // CHANGE THIS from '/login' to '/'
     routes: [
       // ADD THIS NEW ROUTE AT THE TOP
       GoRoute(

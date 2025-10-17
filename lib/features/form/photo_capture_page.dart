@@ -24,6 +24,11 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   String? _errorMessage;
   File? _capturedImage;
 
+  // Photo size requirements (from backend in future)
+  static const int _photoWidthMM = 54; // Width in millimeters
+  static const int _photoHeightMM = 86; // Height in millimeters
+  static const double _photoAspectRatio = 54 / 86; // ~0.628
+
   @override
   void initState() {
     super.initState();
@@ -189,115 +194,182 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
 
     return Column(
       children: [
-        // Camera Preview
+        // Camera Preview Section - More space
+        // Camera Preview Section - More space
         Expanded(
-          flex: 3,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              CameraPreview(_controller!),
-
-              // Guide overlay
-              Center(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.7,
-                  height: MediaQuery.of(context).size.width * 0.9,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 2,
+          flex: 5,
+          child: Container(
+            color: Colors.black,
+            width: double.infinity,
+            child: Stack(
+              children: [
+                // Camera preview - full width, proper aspect
+                SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller!.value.previewSize!.height,
+                      height: _controller!.value.previewSize!.width,
+                      child: CameraPreview(_controller!),
                     ),
-                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-              ),
-            ],
+
+                // Face outline overlay - centered
+                Center(
+                  child: CustomPaint(
+                    size: Size(
+                      MediaQuery.of(context).size.width * 0.8,
+                      MediaQuery.of(context).size.height * 0.5,
+                    ),
+                    painter: FaceOutlinePainter(
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ),
+
+                // Size requirement badge at top
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.photo,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Required: $_photoWidthMM mm × $_photoHeightMM mm',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
 
-        // Instructions Section
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.card,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(24),
+        // Instructions Section - Scrollable, less space
+        Expanded(
+          flex: 3,
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.card,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Instructions Title
-              Row(
-                children: [
-                  Icon(
-                    CupertinoIcons.info_circle,
-                    color: theme.colorScheme.primary,
-                    size: 20,
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.info_circle,
+                        color: theme.colorScheme.primary,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Photo Guidelines',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.foreground,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Photo Guidelines',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.foreground,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                ),
 
-              // Instructions List
-              _buildInstructionItem(
-                'Keep good lighting in front of you',
-                CupertinoIcons.light_max,
-              ),
-              const SizedBox(height: 12),
-              _buildInstructionItem(
-                'Use a plain background if possible',
-                CupertinoIcons.rectangle_fill_on_rectangle_fill,
-              ),
-              const SizedBox(height: 12),
-              _buildInstructionItem(
-                'Position your face within the frame',
-                CupertinoIcons.person_crop_square,
-              ),
-              const SizedBox(height: 12),
-              _buildInstructionItem(
-                'Look directly at the camera',
-                CupertinoIcons.eye,
-              ),
-              const SizedBox(height: 12),
-              _buildInstructionItem(
-                'Wear the official uniform',
-                CupertinoIcons.person_2,
-              ),
-              const SizedBox(height: 24),
-
-              // Capture Button
-              GestureDetector(
-                onTap: _capturePhoto,
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 4,
-                    ),
-                  ),
-                  child: Container(
-                    margin: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
+                // Scrollable instructions
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        _buildInstructionItem(
+                          'Keep good lighting in front of you',
+                          CupertinoIcons.light_max,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildInstructionItem(
+                          'Use a plain background if possible',
+                          CupertinoIcons.rectangle_fill_on_rectangle_fill,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildInstructionItem(
+                          'Position your face within the frame',
+                          CupertinoIcons.person_crop_square,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildInstructionItem(
+                          'Look directly at the camera',
+                          CupertinoIcons.eye,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildInstructionItem(
+                          'Wear the official uniform',
+                          CupertinoIcons.person_2,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            ],
+
+                // Capture Button - Always visible at bottom
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: GestureDetector(
+                    onTap: _capturePhoto,
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.colorScheme.primary,
+                          width: 4,
+                        ),
+                      ),
+                      child: Container(
+                        margin: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -379,4 +451,176 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
       ],
     );
   }
+}
+
+// Custom painter for face outline guide
+class FaceOutlinePainter extends CustomPainter {
+  final Color color;
+
+  FaceOutlinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+
+    final center = Offset(size.width / 2, size.height / 2);
+
+    // Use passport photo proportions (54mm x 86mm = ~0.628 ratio)
+    // Head should take about 70-80% of photo height
+    final headWidth = size.width * 0.5;
+    final headHeight = size.height * 0.42;
+
+    final headRect = Rect.fromCenter(
+      center: Offset(center.dx, center.dy - size.height * 0.08),
+      width: headWidth,
+      height: headHeight,
+    );
+
+    canvas.drawOval(headRect, paint);
+
+    // Neck
+    final neckTop = headRect.bottom;
+    final neckBottom = neckTop + size.height * 0.1;
+    final neckWidth = headWidth * 0.35;
+
+    // Left neck line
+    canvas.drawLine(
+      Offset(center.dx - neckWidth / 2, neckTop),
+      Offset(center.dx - neckWidth / 2 - 8, neckBottom),
+      paint,
+    );
+
+    // Right neck line
+    canvas.drawLine(
+      Offset(center.dx + neckWidth / 2, neckTop),
+      Offset(center.dx + neckWidth / 2 + 8, neckBottom),
+      paint,
+    );
+
+    // Shoulders
+    final shoulderPath = Path();
+    final shoulderTop = neckBottom;
+    final shoulderBottom = shoulderTop + size.height * 0.15;
+
+    // Left shoulder
+    shoulderPath.moveTo(center.dx - neckWidth / 2 - 8, shoulderTop);
+    shoulderPath.quadraticBezierTo(
+      center.dx - size.width * 0.25,
+      shoulderTop + 20,
+      center.dx - size.width * 0.35,
+      shoulderBottom,
+    );
+
+    // Right shoulder
+    shoulderPath.moveTo(center.dx + neckWidth / 2 + 8, shoulderTop);
+    shoulderPath.quadraticBezierTo(
+      center.dx + size.width * 0.25,
+      shoulderTop + 20,
+      center.dx + size.width * 0.35,
+      shoulderBottom,
+    );
+
+    canvas.drawPath(shoulderPath, paint);
+
+    // Photo frame border (shows actual photo boundaries)
+    final frameRect = Rect.fromCenter(
+      center: center,
+      width: size.width * 0.72,
+      height: (size.width * 0.72) / 0.628, // 54:86 ratio
+    );
+
+    final framePaint = Paint()
+      ..color = color.withOpacity(0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.square;
+
+    // Draw corner brackets instead of full rectangle
+    final cornerLength = 30.0;
+
+    // Top-left corner
+    canvas.drawLine(
+      frameRect.topLeft,
+      Offset(frameRect.left + cornerLength, frameRect.top),
+      framePaint,
+    );
+    canvas.drawLine(
+      frameRect.topLeft,
+      Offset(frameRect.left, frameRect.top + cornerLength),
+      framePaint,
+    );
+
+    // Top-right corner
+    canvas.drawLine(
+      frameRect.topRight,
+      Offset(frameRect.right - cornerLength, frameRect.top),
+      framePaint,
+    );
+    canvas.drawLine(
+      frameRect.topRight,
+      Offset(frameRect.right, frameRect.top + cornerLength),
+      framePaint,
+    );
+
+    // Bottom-left corner
+    canvas.drawLine(
+      frameRect.bottomLeft,
+      Offset(frameRect.left + cornerLength, frameRect.bottom),
+      framePaint,
+    );
+    canvas.drawLine(
+      frameRect.bottomLeft,
+      Offset(frameRect.left, frameRect.bottom - cornerLength),
+      framePaint,
+    );
+
+    // Bottom-right corner
+    canvas.drawLine(
+      frameRect.bottomRight,
+      Offset(frameRect.right - cornerLength, frameRect.bottom),
+      framePaint,
+    );
+    canvas.drawLine(
+      frameRect.bottomRight,
+      Offset(frameRect.right, frameRect.bottom - cornerLength),
+      framePaint,
+    );
+
+    // Guide text at top
+    final textSpan = TextSpan(
+      text: 'Align your face here',
+      style: TextStyle(
+        color: color,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        shadows: [
+          Shadow(
+            color: Colors.black.withOpacity(0.5),
+            offset: const Offset(0, 1),
+            blurRadius: 3,
+          ),
+        ],
+      ),
+    );
+
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        center.dx - textPainter.width / 2,
+        frameRect.top - 35,
+      ),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
