@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:go_router/go_router.dart';
+import 'package:impressaa/features/splash/splash_page.dart'; // ADD THIS
 import 'package:impressaa/features/form/form_preview_page.dart';
 import 'package:impressaa/features/form/photo_capture_page.dart';
 import 'package:impressaa/features/auth/auth_page.dart';
@@ -8,8 +9,13 @@ import 'package:impressaa/features/form/data/form_models.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/', // CHANGE THIS from '/login' to '/'
     routes: [
+      // ADD THIS NEW ROUTE AT THE TOP
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const SplashPage(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const AuthPage(),
@@ -31,12 +37,10 @@ class AppRouter {
           final extra = state.extra;
 
           if (extra == null) {
-            // Redirect to form if no data
             return const FormPage();
           }
 
           try {
-            // Handle the map conversion safely
             Map<String, dynamic> dataMap;
 
             if (extra is Map<String, dynamic>) {
@@ -65,7 +69,6 @@ class AppRouter {
               photo: photo,
             );
           } catch (e) {
-            // If anything goes wrong, go back to form
             return const FormPage();
           }
         },
