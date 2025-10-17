@@ -40,6 +40,9 @@ dependencies:
   # URL Launcher (for phone calls)
   url_launcher: ^6.2.5
 
+  # Image Processing
+  image: ^4.1.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

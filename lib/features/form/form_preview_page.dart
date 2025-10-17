@@ -129,12 +129,44 @@ class FormPreviewPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'ID Card Photo',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'ID Card Photo',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    size: 14,
+                    color: Colors.green.shade700,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '54mm × 86mm',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Container(
@@ -148,10 +180,12 @@ class FormPreviewPage extends StatelessWidget {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.file(
-              photoFile,
-              height: 250,
-              fit: BoxFit.cover,
+            child: AspectRatio(
+              aspectRatio: 54 / 86, // Force correct aspect ratio display
+              child: Image.file(
+                photoFile,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:image/image.dart' as img;
 
 class PhotoCapturePage extends StatefulWidget {
   final String? formId;
@@ -87,9 +88,14 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     }
 
     try {
+      // Capture the photo
       final image = await _controller!.takePicture();
+
+      // Crop to correct aspect ratio
+      final croppedImage = await _cropToAspectRatio(image.path);
+
       setState(() {
-        _capturedImage = File(image.path);
+        _capturedImage = croppedImage;
       });
     } catch (e) {
       if (mounted) {
@@ -101,6 +107,56 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
         );
       }
     }
+  }
+
+  Future<File> _cropToAspectRatio(String imagePath) async {
+    // Read the image
+    final bytes = await File(imagePath).readAsBytes();
+    final originalImage = img.decodeImage(bytes);
+
+    if (originalImage == null) {
+      return File(imagePath); // Return original if decode fails
+    }
+
+    // Calculate crop dimensions for 54:86 ratio (~0.628)
+    const targetAspectRatio = _photoAspectRatio;
+    final currentAspectRatio = originalImage.width / originalImage.height;
+
+    int cropWidth;
+    int cropHeight;
+    int offsetX = 0;
+    int offsetY = 0;
+
+    if (currentAspectRatio > targetAspectRatio) {
+      // Image is too wide, crop width
+      cropHeight = originalImage.height;
+      cropWidth = (cropHeight * targetAspectRatio).round();
+      offsetX = ((originalImage.width - cropWidth) / 2).round();
+    } else {
+      // Image is too tall, crop height
+      cropWidth = originalImage.width;
+      cropHeight = (cropWidth / targetAspectRatio).round();
+      offsetY = ((originalImage.height - cropHeight) / 2).round();
+    }
+
+    // Crop the image from center
+    final croppedImage = img.copyCrop(
+      originalImage,
+      x: offsetX,
+      y: offsetY,
+      width: cropWidth,
+      height: cropHeight,
+    );
+
+    // Save the cropped image
+    final croppedPath = imagePath.replaceAll('.jpg', '_cropped.jpg');
+    final croppedFile = File(croppedPath);
+    await croppedFile.writeAsBytes(img.encodeJpg(croppedImage, quality: 95));
+
+    // Delete original uncropped image
+    await File(imagePath).delete();
+
+    return croppedFile;
   }
 
   void _retakePhoto() {
