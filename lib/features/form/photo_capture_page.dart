@@ -268,6 +268,11 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
                 'Look directly at the camera',
                 CupertinoIcons.eye,
               ),
+              const SizedBox(height: 12),
+              _buildInstructionItem(
+                'Wear the official uniform',
+                CupertinoIcons.person_2,
+              ),
               const SizedBox(height: 24),
 
               // Capture Button
