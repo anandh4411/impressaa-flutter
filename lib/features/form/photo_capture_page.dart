@@ -26,9 +26,9 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   File? _capturedImage;
 
   // Photo size requirements (from backend in future)
-  static const int _photoWidthMM = 54; // Width in millimeters
-  static const int _photoHeightMM = 86; // Height in millimeters
-  static const double _photoAspectRatio = 54 / 86; // ~0.628
+  static const int _photoWidthMM = 35; // Width in millimeters
+  static const int _photoHeightMM = 45; // Height in millimeters
+  static const double _photoAspectRatio = 35 / 45; // ~0.778
 
   @override
   void initState() {
@@ -271,12 +271,12 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
                   ),
                 ),
 
-                // Face outline overlay - centered
+                // Face circle guide overlay - top-centered
                 Center(
                   child: CustomPaint(
                     size: Size(
-                      MediaQuery.of(context).size.width * 0.8,
-                      MediaQuery.of(context).size.height * 0.5,
+                      MediaQuery.of(context).size.width * 0.75,
+                      MediaQuery.of(context).size.height * 0.4,
                     ),
                     painter: FaceOutlinePainter(
                       color: Colors.white.withOpacity(0.9),
@@ -369,6 +369,11 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
                       children: [
+                        _buildInstructionItem(
+                          'Center your face within the circle outline',
+                          CupertinoIcons.scope,
+                        ),
+                        const SizedBox(height: 10),
                         _buildInstructionItem(
                           'Keep good lighting in front of you',
                           CupertinoIcons.light_max,
@@ -524,130 +529,23 @@ class FaceOutlinePainter extends CustomPainter {
 
     final center = Offset(size.width / 2, size.height / 2);
 
-    // Use passport photo proportions (54mm x 86mm = ~0.628 ratio)
-    // Head should take about 70-80% of photo height
-    final headWidth = size.width * 0.5;
-    final headHeight = size.height * 0.42;
-
-    final headRect = Rect.fromCenter(
-      center: Offset(center.dx, center.dy - size.height * 0.08),
-      width: headWidth,
-      height: headHeight,
+    // Position circle higher up (not vertically centered)
+    // Move it up by 15% of the height so there's less space above the head
+    final circleCenter = Offset(
+      center.dx, // Horizontally centered
+      center.dy - (size.height * 0.15), // Moved up
     );
 
-    canvas.drawOval(headRect, paint);
+    // Circle diameter should be about 60% of the container width
+    final circleDiameter = size.width * 0.6;
+    final circleRadius = circleDiameter / 2;
 
-    // Neck
-    final neckTop = headRect.bottom;
-    final neckBottom = neckTop + size.height * 0.1;
-    final neckWidth = headWidth * 0.35;
-
-    // Left neck line
-    canvas.drawLine(
-      Offset(center.dx - neckWidth / 2, neckTop),
-      Offset(center.dx - neckWidth / 2 - 8, neckBottom),
-      paint,
-    );
-
-    // Right neck line
-    canvas.drawLine(
-      Offset(center.dx + neckWidth / 2, neckTop),
-      Offset(center.dx + neckWidth / 2 + 8, neckBottom),
-      paint,
-    );
-
-    // Shoulders
-    final shoulderPath = Path();
-    final shoulderTop = neckBottom;
-    final shoulderBottom = shoulderTop + size.height * 0.15;
-
-    // Left shoulder
-    shoulderPath.moveTo(center.dx - neckWidth / 2 - 8, shoulderTop);
-    shoulderPath.quadraticBezierTo(
-      center.dx - size.width * 0.25,
-      shoulderTop + 20,
-      center.dx - size.width * 0.35,
-      shoulderBottom,
-    );
-
-    // Right shoulder
-    shoulderPath.moveTo(center.dx + neckWidth / 2 + 8, shoulderTop);
-    shoulderPath.quadraticBezierTo(
-      center.dx + size.width * 0.25,
-      shoulderTop + 20,
-      center.dx + size.width * 0.35,
-      shoulderBottom,
-    );
-
-    canvas.drawPath(shoulderPath, paint);
-
-    // Photo frame border (shows actual photo boundaries)
-    final frameRect = Rect.fromCenter(
-      center: center,
-      width: size.width * 0.72,
-      height: (size.width * 0.72) / 0.628, // 54:86 ratio
-    );
-
-    final framePaint = Paint()
-      ..color = color.withOpacity(0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.square;
-
-    // Draw corner brackets instead of full rectangle
-    final cornerLength = 30.0;
-
-    // Top-left corner
-    canvas.drawLine(
-      frameRect.topLeft,
-      Offset(frameRect.left + cornerLength, frameRect.top),
-      framePaint,
-    );
-    canvas.drawLine(
-      frameRect.topLeft,
-      Offset(frameRect.left, frameRect.top + cornerLength),
-      framePaint,
-    );
-
-    // Top-right corner
-    canvas.drawLine(
-      frameRect.topRight,
-      Offset(frameRect.right - cornerLength, frameRect.top),
-      framePaint,
-    );
-    canvas.drawLine(
-      frameRect.topRight,
-      Offset(frameRect.right, frameRect.top + cornerLength),
-      framePaint,
-    );
-
-    // Bottom-left corner
-    canvas.drawLine(
-      frameRect.bottomLeft,
-      Offset(frameRect.left + cornerLength, frameRect.bottom),
-      framePaint,
-    );
-    canvas.drawLine(
-      frameRect.bottomLeft,
-      Offset(frameRect.left, frameRect.bottom - cornerLength),
-      framePaint,
-    );
-
-    // Bottom-right corner
-    canvas.drawLine(
-      frameRect.bottomRight,
-      Offset(frameRect.right - cornerLength, frameRect.bottom),
-      framePaint,
-    );
-    canvas.drawLine(
-      frameRect.bottomRight,
-      Offset(frameRect.right, frameRect.bottom - cornerLength),
-      framePaint,
-    );
+    // Draw the main circle
+    canvas.drawCircle(circleCenter, circleRadius, paint);
 
     // Guide text at top
     final textSpan = TextSpan(
-      text: 'Align your face here',
+      text: 'Center your face here',
       style: TextStyle(
         color: color,
         fontSize: 14,
@@ -672,7 +570,7 @@ class FaceOutlinePainter extends CustomPainter {
       canvas,
       Offset(
         center.dx - textPainter.width / 2,
-        frameRect.top - 35,
+        circleCenter.dy - circleRadius - 35, // Position text above circle
       ),
     );
   }

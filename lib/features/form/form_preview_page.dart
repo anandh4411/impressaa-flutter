@@ -156,7 +156,7 @@ class FormPreviewPage extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '54mm × 86mm',
+                    '35mm × 45mm',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -181,7 +181,7 @@ class FormPreviewPage extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: AspectRatio(
-              aspectRatio: 54 / 86, // Force correct aspect ratio display
+              aspectRatio: 35 / 45, // Updated to new ratio
               child: Image.file(
                 photoFile,
                 fit: BoxFit.cover,
