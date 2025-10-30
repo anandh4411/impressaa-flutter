@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'data/form_models.dart';
 
-class FormPreviewPage extends StatelessWidget {
+class FormPreviewPage extends StatefulWidget {
   final FormConfigModel formConfig;
   final Map<String, dynamic> formData;
   final File? photo;
@@ -16,6 +16,67 @@ class FormPreviewPage extends StatelessWidget {
     required this.formData,
     this.photo,
   });
+
+  @override
+  State<FormPreviewPage> createState() => _FormPreviewPageState();
+}
+
+class _FormPreviewPageState extends State<FormPreviewPage> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollIndicator = true;
+  bool _hasScrolledToBottom = false;
+  bool _isConfirmed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+
+    // Check if content is scrollable after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkIfScrollable();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _checkIfScrollable() {
+    if (!mounted) return;
+
+    final isScrollable = _scrollController.position.maxScrollExtent > 0;
+    setState(() {
+      _showScrollIndicator = isScrollable;
+      // If not scrollable, user has already "seen everything"
+      if (!isScrollable) {
+        _hasScrolledToBottom = true;
+      }
+    });
+  }
+
+  void _onScroll() {
+    if (!mounted) return;
+
+    // Hide scroll indicator when user starts scrolling
+    if (_showScrollIndicator && _scrollController.offset > 50) {
+      setState(() {
+        _showScrollIndicator = false;
+      });
+    }
+
+    // Check if scrolled to bottom (with small threshold)
+    final isAtBottom = _scrollController.offset >=
+        _scrollController.position.maxScrollExtent - 50;
+
+    if (isAtBottom && !_hasScrolledToBottom) {
+      setState(() {
+        _hasScrolledToBottom = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,82 +106,150 @@ class FormPreviewPage extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // Preview Content
+            // Preview Content with Scroll Indicator
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Form Title
-                    Text(
-                      formConfig.title,
-                      style: theme.textTheme.h2,
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Photo Preview (starts directly, no heading)
+                        if (widget.photo != null) ...[
+                          _buildPhotoPreview(widget.photo!),
+                          const SizedBox(height: 24),
+                        ],
+
+                        // Form Data Preview
+                        ...widget.formConfig.fields.map((field) {
+                          final value = widget.formData[field.id];
+                          if (value == null ||
+                              value.toString().trim().isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return _buildPreviewField(field, value);
+                        }),
+
+                        // Confirmation Checkbox (only shows after scrolling to bottom)
+                        if (_hasScrolledToBottom) ...[
+                          const SizedBox(height: 24),
+                          _buildConfirmationCheckbox(theme),
+                        ],
+
+                        // Extra spacing at bottom
+                        const SizedBox(height: 100),
+                      ],
                     ),
-                    if (formConfig.description != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        formConfig.description!,
-                        style: theme.textTheme.muted,
-                      ),
-                    ],
-                    const SizedBox(height: 24),
+                  ),
 
-                    // Photo Preview
-                    if (photo != null) ...[
-                      _buildPhotoPreview(photo!),
-                      const SizedBox(height: 24),
-                    ],
-
-                    // Form Data Preview
-                    ...formConfig.fields.map((field) {
-                      final value = formData[field.id];
-                      if (value == null || value.toString().trim().isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-
-                      return _buildPreviewField(field, value);
-                    }),
-                  ],
-                ),
+                  // Scroll Down Indicator
+                  if (_showScrollIndicator)
+                    Positioned(
+                      bottom: 20,
+                      left: 0,
+                      right: 0,
+                      child: _buildScrollIndicator(),
+                    ),
+                ],
               ),
             ),
 
             // Bottom Actions
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.background,
-                border: Border(
-                  top: BorderSide(
-                    color: theme.colorScheme.border,
-                    width: 1,
-                  ),
-                ),
+            _buildBottomActions(theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScrollIndicator() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Scroll to view all details',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ShadButton(
-                      onPressed: () => _handleSubmit(context),
-                      child: const Text('Submit Application'),
-                    ),
+            ),
+            const SizedBox(width: 8),
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 8.0),
+              duration: const Duration(milliseconds: 800),
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(0, value),
+                  child: const Icon(
+                    CupertinoIcons.chevron_down,
+                    color: Colors.white,
+                    size: 16,
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ShadButton.outline(
-                      onPressed: () => context.pop(),
-                      child: const Text('Edit Form'),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
+              onEnd: () {
+                // Restart animation
+                setState(() {});
+              },
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildConfirmationCheckbox(ShadThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.muted.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.border,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ShadCheckbox(
+            value: _isConfirmed,
+            onChanged: (value) {
+              setState(() {
+                _isConfirmed = value ?? false;
+              });
+            },
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isConfirmed = !_isConfirmed;
+                });
+              },
+              child: Text(
+                'I confirm that I have reviewed all the information above and verify that it is correct.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: theme.colorScheme.foreground,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -181,7 +310,7 @@ class FormPreviewPage extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: AspectRatio(
-              aspectRatio: 35 / 45, // Updated to new ratio
+              aspectRatio: 35 / 45,
               child: Image.file(
                 photoFile,
                 fit: BoxFit.cover,
@@ -220,6 +349,42 @@ class FormPreviewPage extends StatelessWidget {
     );
   }
 
+  Widget _buildBottomActions(ShadThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.background,
+        border: Border(
+          top: BorderSide(
+            color: theme.colorScheme.border,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: ShadButton(
+              // Disable button if user hasn't confirmed
+              onPressed: _isConfirmed ? () => _handleSubmit(context) : null,
+              child: const Text('Submit Application'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ShadButton.outline(
+              onPressed: () => context.pop(),
+              child: const Text('Edit Form'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _handleSubmit(BuildContext context) async {
     // Show loading dialog
     showDialog(
@@ -247,8 +412,8 @@ class FormPreviewPage extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () {
-                // Navigate back to auth page or home
-                context.go('/form');
+                // Navigate back to login
+                context.go('/login');
               },
               child: const Text('OK'),
             ),
