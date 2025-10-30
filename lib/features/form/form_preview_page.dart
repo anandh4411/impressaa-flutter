@@ -364,12 +364,32 @@ class _FormPreviewPageState extends State<FormPreviewPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: double.infinity,
-            child: ShadButton(
-              // Disable button if user hasn't confirmed
-              onPressed: _isConfirmed ? () => _handleSubmit(context) : null,
-              child: const Text('Submit Application'),
+          // Submit Button with visual disabled state
+          AnimatedOpacity(
+            opacity: _isConfirmed ? 1.0 : 0.5,
+            duration: const Duration(milliseconds: 300),
+            child: SizedBox(
+              width: double.infinity,
+              child: ShadButton(
+                // Disable button if user hasn't confirmed
+                enabled: _isConfirmed,
+                onPressed: _isConfirmed ? () => _handleSubmit(context) : null,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Submit Application'),
+                    if (!_isConfirmed) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        CupertinoIcons.lock_fill,
+                        size: 16,
+                        color: theme.colorScheme.primaryForeground
+                            .withValues(alpha: 0.7),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
