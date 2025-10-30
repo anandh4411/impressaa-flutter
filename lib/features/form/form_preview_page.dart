@@ -170,13 +170,14 @@ class _FormPreviewPageState extends State<FormPreviewPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
+          color: Colors.black.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Row(
+        child: const Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               'Scroll to view all details',
               style: TextStyle(
                 color: Colors.white,
@@ -184,24 +185,11 @@ class _FormPreviewPageState extends State<FormPreviewPage> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(width: 8),
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 8.0),
-              duration: const Duration(milliseconds: 800),
-              builder: (context, value, child) {
-                return Transform.translate(
-                  offset: Offset(0, value),
-                  child: const Icon(
-                    CupertinoIcons.chevron_down,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                );
-              },
-              onEnd: () {
-                // Restart animation
-                setState(() {});
-              },
+            SizedBox(width: 8),
+            Icon(
+              CupertinoIcons.chevron_down,
+              color: Colors.white,
+              size: 16,
             ),
           ],
         ),
