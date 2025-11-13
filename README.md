@@ -81,6 +81,12 @@ Lists active devices (emulators/simulators) for running the app.
    flutter run -d "SM M346B"
    flutter run -d <ios_simulator_id>
    ```
+
+   Get debug apk:
+   ```bash
+   flutter build apk --debug
+   ```
+
    Replace `<ios_simulator_id>` with the simulator name or UUID from `flutter devices`.
 
 ### Project Structure
