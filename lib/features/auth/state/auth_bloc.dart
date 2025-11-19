@@ -38,7 +38,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (state is AuthInitial) {
       final currentState = state as AuthInitial;
       emit(currentState.copyWith(
-        institutionCode: event.institutionCode.toUpperCase(),
+        institutionCode: event.institutionCode,
       ));
     }
   }
@@ -50,7 +50,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (state is AuthInitial) {
       final currentState = state as AuthInitial;
       emit(currentState.copyWith(
-        loginCode: event.loginCode.toUpperCase(),
+        loginCode: event.loginCode,
       ));
     }
   }
