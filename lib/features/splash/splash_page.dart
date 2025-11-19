@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import '../../core/di/injection.dart';
+import '../../core/storage/auth_storage.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -56,12 +57,22 @@ class _SplashPageState extends State<SplashPage>
   }
 
   Future<void> _initializeApp() async {
-    // Simulate app initialization (loading configs, checking auth, etc.)
-    await Future.delayed(const Duration(seconds: 3));
+    // Wait for animation to complete
+    await Future.delayed(const Duration(seconds: 2));
 
-    // Navigate to form page directly (skip auth)
-    if (mounted) {
+    if (!mounted) return;
+
+    // Check authentication status
+    final authStorage = getIt<AuthStorage>();
+    final isAuthenticated = authStorage.isAuthenticated();
+
+    // Navigate based on auth state
+    if (isAuthenticated) {
+      // User is logged in, go to form
       context.go('/form');
+    } else {
+      // User is not logged in, go to login page
+      context.go('/login');
     }
   }
 

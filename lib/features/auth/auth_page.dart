@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../shared/widgets/wave_background.dart';
+import '../../core/di/injection.dart';
 import 'components/header_section.dart';
 import 'components/form_section.dart';
 import 'components/help_section.dart';
 import 'state/auth_bloc.dart';
+import 'data/auth_api_service.dart';
+import '../../core/storage/auth_storage.dart';
 
 class AuthPage extends StatelessWidget {
   const AuthPage({super.key});
@@ -14,7 +17,10 @@ class AuthPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AuthBloc(),
+      create: (context) => AuthBloc(
+        authApiService: getIt<AuthApiService>(),
+        authStorage: getIt<AuthStorage>(),
+      ),
       child: const _AuthPageView(),
     );
   }

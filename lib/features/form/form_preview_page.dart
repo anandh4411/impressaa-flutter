@@ -1,27 +1,60 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import '../../core/di/injection.dart';
 import 'data/form_models.dart';
+import 'data/form_api_service.dart';
+import '../../core/storage/auth_storage.dart';
+import 'state/form_bloc.dart';
+import 'state/form_state.dart';
 
-class FormPreviewPage extends StatefulWidget {
-  final FormConfigModel formConfig;
+class FormPreviewPage extends StatelessWidget {
+  final FormApiResponse formResponse;
   final Map<String, dynamic> formData;
   final File? photo;
 
   const FormPreviewPage({
     super.key,
-    required this.formConfig,
+    required this.formResponse,
     required this.formData,
     this.photo,
   });
 
   @override
-  State<FormPreviewPage> createState() => _FormPreviewPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => DynamicFormBloc(
+        formApiService: getIt<FormApiService>(),
+        authStorage: getIt<AuthStorage>(),
+      ),
+      child: _FormPreviewView(
+        formResponse: formResponse,
+        formData: formData,
+        photo: photo,
+      ),
+    );
+  }
 }
 
-class _FormPreviewPageState extends State<FormPreviewPage> {
+class _FormPreviewView extends StatefulWidget {
+  final FormApiResponse formResponse;
+  final Map<String, dynamic> formData;
+  final File? photo;
+
+  const _FormPreviewView({
+    required this.formResponse,
+    required this.formData,
+    this.photo,
+  });
+
+  @override
+  State<_FormPreviewView> createState() => _FormPreviewPageState();
+}
+
+class _FormPreviewPageState extends State<_FormPreviewView> {
   final ScrollController _scrollController = ScrollController();
   bool _showScrollIndicator = true;
   bool _hasScrolledToBottom = false;
@@ -82,7 +115,46 @@ class _FormPreviewPageState extends State<FormPreviewPage> {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
 
-    return CupertinoPageScaffold(
+    return BlocListener<DynamicFormBloc, DynamicFormState>(
+      listener: (context, state) {
+        if (state is DynamicFormSubmitSuccess) {
+          // Show success dialog
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Success!'),
+              content: const Text(
+                  'Your application has been submitted successfully. Your ID card will be ready soon.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    // Navigate back to login (user is now logged out)
+                    context.go('/login');
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } else if (state is DynamicFormSubmitError) {
+          // Show error dialog
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Error'),
+              content: Text(state.message),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
+      },
+      child: CupertinoPageScaffold(
       backgroundColor: theme.colorScheme.background,
       navigationBar: CupertinoNavigationBar(
         backgroundColor: theme.colorScheme.background,
@@ -123,8 +195,8 @@ class _FormPreviewPageState extends State<FormPreviewPage> {
                         ],
 
                         // Form Data Preview
-                        ...widget.formConfig.fields.map((field) {
-                          final value = widget.formData[field.id];
+                        ...widget.formResponse.fields.map((field) {
+                          final value = widget.formData[field.id.toString()];
                           if (value == null ||
                               value.toString().trim().isEmpty) {
                             return const SizedBox.shrink();
@@ -162,6 +234,7 @@ class _FormPreviewPageState extends State<FormPreviewPage> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -393,41 +466,84 @@ class _FormPreviewPageState extends State<FormPreviewPage> {
     );
   }
 
-  void _handleSubmit(BuildContext context) async {
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+  void _handleSubmit(BuildContext context) {
+    final bloc = context.read<DynamicFormBloc>();
 
-    // Simulate API submission
-    await Future.delayed(const Duration(seconds: 2));
+    // The BLoC submission requires DynamicFormLoaded state
+    // We need to manually set the state first
+    // This is a workaround since we're navigating with data rather than loading via API
+    bloc.stream.listen((state) {
+      // Once state is loaded or already submitted, no need to listen
+    });
 
-    if (context.mounted) {
-      Navigator.of(context).pop(); // Close loading dialog
+    // Manually create and trigger submission with our data
+    // Since we can't emit directly, we'll use a different approach
+    // For now, just call the API service directly
+    _submitFormDirectly(context);
+  }
 
-      // Show success dialog
+  Future<void> _submitFormDirectly(BuildContext context) async {
+    try {
+      // Show loading
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Text('Success!'),
-          content: const Text(
-              'Your application has been submitted successfully. Your ID card will be ready soon.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                // Navigate back to login
-                context.go('/login');
-              },
-              child: const Text('OK'),
-            ),
-          ],
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
         ),
       );
+
+      // Call API
+      final formApiService = getIt<FormApiService>();
+      final response = await formApiService.submitForm(widget.formData);
+
+      // Auto-logout
+      await getIt<AuthStorage>().clearAuth();
+
+      if (context.mounted) {
+        // Close loading
+        Navigator.of(context).pop();
+
+        // Show success
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Success!'),
+            content: Text(
+                'Your application has been submitted successfully (${response.submissionUuid}). Your ID card will be ready soon.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  // Navigate back to login
+                  context.go('/login');
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        // Close loading if open
+        Navigator.of(context).pop();
+
+        // Show error
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text('Submission failed: ${e.toString()}'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 }

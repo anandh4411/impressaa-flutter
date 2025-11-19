@@ -51,11 +51,11 @@ class AppRouter {
               return const FormPage();
             }
 
-            final formConfig = dataMap['formConfig'] as FormConfigModel?;
+            final formResponse = dataMap['formResponse'] as FormApiResponse?;
             final formDataRaw = dataMap['formData'];
             final photo = dataMap['photo'] as File?;
 
-            if (formConfig == null || formDataRaw == null) {
+            if (formResponse == null || formDataRaw == null) {
               return const FormPage();
             }
 
@@ -64,7 +64,7 @@ class AppRouter {
                 : Map<String, dynamic>.from(formDataRaw as Map);
 
             return FormPreviewPage(
-              formConfig: formConfig,
+              formResponse: formResponse,
               formData: formData,
               photo: photo,
             );

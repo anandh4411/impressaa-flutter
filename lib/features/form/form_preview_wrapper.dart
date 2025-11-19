@@ -13,14 +13,15 @@ class FormPreviewWrapper extends StatelessWidget {
     final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
 
     if (extra == null ||
-        extra['formConfig'] == null ||
+        extra['formResponse'] == null ||
         extra['formData'] == null) {
       return _buildErrorPage(context);
     }
 
     return FormPreviewPage(
-      formConfig: extra['formConfig'] as FormConfigModel,
+      formResponse: extra['formResponse'] as FormApiResponse,
       formData: extra['formData'] as Map<String, dynamic>,
+      photo: extra['photo'] as dynamic,
     );
   }
 

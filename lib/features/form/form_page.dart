@@ -3,26 +3,25 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:impressaa/features/form/data/form_models.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import '../../core/di/injection.dart';
+import 'data/form_api_service.dart';
+import '../../core/storage/auth_storage.dart';
 import 'components/dynamic_form_field.dart';
 import 'state/form_bloc.dart';
 import 'state/form_event.dart';
 import 'state/form_state.dart';
 
 class FormPage extends StatelessWidget {
-  final String? institutionId;
-
-  const FormPage({
-    super.key,
-    this.institutionId,
-  });
+  const FormPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => DynamicFormBloc()
-        ..add(DynamicFormLoadRequested(institutionId ?? 'inst_123')),
+      create: (context) => DynamicFormBloc(
+        formApiService: getIt<FormApiService>(),
+        authStorage: getIt<AuthStorage>(),
+      )..add(DynamicFormLoadRequested()),
       child: const _FormPageView(),
     );
   }
@@ -67,7 +66,7 @@ class _FormPageViewState extends State<_FormPageView> {
           builder: (context, state) {
             if (state is DynamicFormLoaded) {
               return Text(
-                state.formConfig.title,
+                state.formConfig?.name ?? 'Form',
                 style: TextStyle(
                   color: theme.colorScheme.foreground,
                   fontWeight: FontWeight.w600,
@@ -94,19 +93,11 @@ class _FormPageViewState extends State<_FormPageView> {
             }
 
             if (state is DynamicFormValidationError) {
-              // Get the current loaded state from the bloc
-              final bloc = context.read<DynamicFormBloc>();
-              // For validation errors, we need to find the loaded state
-              // This is a bit tricky, so let's handle it differently
-              return _buildFormView(DynamicFormLoaded(
-                formConfig: const FormConfigModel(
-                  id: 'temp',
-                  institutionId: 'temp',
-                  title: 'Form',
-                  fields: [],
-                ),
-                formData: {},
-              ));
+              // Show validation errors - this state doesn't persist form data
+              // so we should handle this better in the UI
+              return Center(
+                child: Text('Validation errors occurred'),
+              );
             }
 
             return const Center(child: CircularProgressIndicator());
@@ -156,13 +147,13 @@ class _FormPageViewState extends State<_FormPageView> {
     return Column(
       children: [
         // Form Header (optional description)
-        if (state.formConfig.description != null)
+        if (state.formConfig?.description != null)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             color: theme.colorScheme.muted.withOpacity(0.5),
             child: Text(
-              state.formConfig.description!,
+              state.formConfig!.description!,
               style: theme.textTheme.muted,
               textAlign: TextAlign.center,
             ),
@@ -183,7 +174,7 @@ class _FormPageViewState extends State<_FormPageView> {
                   const SizedBox(height: 24),
 
                   // Form Fields
-                  ...state.formConfig.fields.map(
+                  ...state.fields.map(
                     (field) => Padding(
                       padding: const EdgeInsets.only(bottom: 20),
                       child: DynamicFormField(
@@ -484,14 +475,14 @@ class _FormPageViewState extends State<_FormPageView> {
     // Navigate to preview page
     try {
       context.push('/form/preview', extra: {
-        'formConfig': state.formConfig,
+        'formResponse': state.formResponse,
         'formData': formData,
         'photo': _capturedPhoto,
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Navigation error: ${e.toString()}'),
+        const SnackBar(
+          content: Text('Navigation error'),
           backgroundColor: Colors.red,
         ),
       );
