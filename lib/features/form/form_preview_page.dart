@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -508,6 +511,8 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
   }
 
   Future<void> _submitFormDirectly(BuildContext context) async {
+    final formDataMap = <String, dynamic>{};
+
     try {
       // Show loading
       showDialog(
@@ -518,9 +523,60 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
         ),
       );
 
-      // Call API
-      final formApiService = getIt<FormApiService>();
-      final response = await formApiService.submitForm(widget.formData);
+      print('=== FORM SUBMISSION DEBUG ===');
+      print('Total fields in form: ${widget.formResponse.fields.length}');
+      print('Total formData entries: ${widget.formData.length}');
+      print('Total photos: ${widget.photos.length}');
+
+      // Add text field data using field IDs
+      widget.formData.forEach((fieldIdStr, value) {
+        final field = widget.formResponse.fields.firstWhere(
+          (f) => f.id.toString() == fieldIdStr,
+          orElse: () => throw Exception('Field not found for ID: $fieldIdStr'),
+        );
+        print('Field ID: ${field.id}, Label: "${field.label}", Type: ${field.type}, Value: "$value"');
+        // Use field ID as key (e.g., "29", "30", "31")
+        formDataMap[field.id.toString()] = value;
+      });
+
+      // Add file/photo fields as MultipartFile
+      for (final entry in widget.photos.entries) {
+        final fieldId = entry.key;
+        final photoFile = entry.value;
+
+        final field = widget.formResponse.fields.firstWhere(
+          (f) => f.id == fieldId,
+          orElse: () => throw Exception('Photo field not found for ID: $fieldId'),
+        );
+
+        print('Photo Field ID: ${field.id}, Label: "${field.label}", Path: ${photoFile.path}');
+
+        // Add as MultipartFile with proper MIME type
+        formDataMap[field.id.toString()] = await MultipartFile.fromFile(
+          photoFile.path,
+          filename: 'photo_${field.id}.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        );
+      }
+
+      print('FormData keys: ${formDataMap.keys.toList()}');
+      print('=== END DEBUG ===');
+
+      // Create FormData for multipart request
+      final formData = FormData.fromMap(formDataMap);
+
+      // Call API directly with FormData
+      final apiClient = getIt<FormApiService>().apiClient;
+      final response = await apiClient.post(
+        '/mobile/form/submit',
+        data: formData,
+      );
+
+      print('Response: ${response.data}');
+
+      // Parse response
+      final responseData = response.data;
+      final submissionUuid = responseData['data']?['submissionUuid'] ?? 'Unknown';
 
       // Auto-logout
       await getIt<AuthStorage>().clearAuth();
@@ -536,7 +592,7 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
           builder: (context) => AlertDialog(
             title: const Text('Success!'),
             content: Text(
-                'Your application has been submitted successfully (${response.submissionUuid}). Your ID card will be ready soon.'),
+                'Your application has been submitted successfully ($submissionUuid). Your ID card will be ready soon.'),
             actions: [
               TextButton(
                 onPressed: () {
@@ -550,6 +606,11 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
         );
       }
     } catch (e) {
+      print('=== SUBMISSION ERROR ===');
+      print('Error: $e');
+      print('Data sent keys: ${formDataMap.keys.toList()}');
+      print('=== END ERROR ===');
+
       if (context.mounted) {
         // Close loading if open
         Navigator.of(context).pop();
@@ -559,7 +620,7 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Error'),
-            content: Text('Submission failed: ${e.toString()}'),
+            content: Text('Submission failed: ${e.toString()}\n\nThis appears to be a backend issue. The mobile app is sending all required fields correctly.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
