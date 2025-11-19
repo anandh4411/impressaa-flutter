@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import '../../../shared/utils/toast_helper.dart';
 import '../state/auth_bloc.dart';
 import '../state/auth_event.dart';
 import '../state/auth_state.dart';
@@ -22,20 +23,36 @@ class _FormSectionState extends State<FormSection> {
     // Validate based on login method
     if (state.currentMethod == LoginMethod.institutionCode) {
       if (state.institutionCode.trim().isEmpty) {
-        _showError('Please enter institution code');
+        ToastHelper.showError(
+          context,
+          title: 'Validation Error',
+          description: 'Please enter institution code',
+        );
         return;
       }
       if (state.idNumber.trim().isEmpty) {
-        _showError('Please enter ID number');
+        ToastHelper.showError(
+          context,
+          title: 'Validation Error',
+          description: 'Please enter ID number',
+        );
         return;
       }
     } else {
       if (state.loginCode.trim().isEmpty) {
-        _showError('Please enter login code');
+        ToastHelper.showError(
+          context,
+          title: 'Validation Error',
+          description: 'Please enter login code',
+        );
         return;
       }
       if (state.idNumber.trim().isEmpty) {
-        _showError('Please enter ID number');
+        ToastHelper.showError(
+          context,
+          title: 'Validation Error',
+          description: 'Please enter ID number',
+        );
         return;
       }
     }
@@ -44,14 +61,14 @@ class _FormSectionState extends State<FormSection> {
     context.read<AuthBloc>().add(AuthSubmitted());
   }
 
-  void _showError(String message) {
-    ShadToaster.of(context).show(
-      ShadToast.destructive(
-        title: const Text('Validation Error'),
-        description: Text(message),
-        duration: const Duration(seconds: 3),
-      ),
-    );
+  bool _isFormValid(AuthInitial state) {
+    if (state.currentMethod == LoginMethod.institutionCode) {
+      return state.institutionCode.trim().isNotEmpty &&
+             state.idNumber.trim().isNotEmpty;
+    } else {
+      return state.loginCode.trim().isNotEmpty &&
+             state.idNumber.trim().isNotEmpty;
+    }
   }
 
   @override
@@ -61,13 +78,11 @@ class _FormSectionState extends State<FormSection> {
         if (state is AuthSuccess) {
           widget.onSuccess?.call();
         } else if (state is AuthFailure) {
-          // Show error toast
-          ShadToaster.of(context).show(
-            ShadToast.destructive(
-              title: const Text('Login Failed'),
-              description: Text(state.message),
-              duration: const Duration(seconds: 4),
-            ),
+          // Show error toast at top
+          ToastHelper.showError(
+            context,
+            title: 'Login Failed',
+            description: state.message,
           );
         }
       },
@@ -183,9 +198,9 @@ class _FormSectionState extends State<FormSection> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Submit button
+                    // Submit button - disabled when form is invalid or loading
                     ShadButton(
-                      onPressed: isLoading
+                      onPressed: (isLoading || !_isFormValid(currentState))
                           ? null
                           : () => _validateAndSubmit(context, currentState),
                       child: isLoading
