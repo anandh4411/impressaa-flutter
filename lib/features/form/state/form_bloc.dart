@@ -145,6 +145,11 @@ class DynamicFormBloc extends Bloc<DynamicFormEvent, DynamicFormState> {
     final errors = <String, String>{};
 
     for (final field in fields) {
+      // Skip file type fields - they are validated separately in the UI
+      if (field.type == FormFieldType.file) {
+        continue;
+      }
+
       final value = formData[field.id.toString()];
 
       // Required field validation
