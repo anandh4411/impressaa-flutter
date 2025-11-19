@@ -89,10 +89,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           return;
         }
 
-        // Call API with institution code
+        // Call API with institution code (trim whitespace)
         final response = await authApiService.loginWithInstitutionCode(
-          institutionCode: currentState.institutionCode,
-          idNumber: currentState.idNumber,
+          institutionCode: currentState.institutionCode.trim(),
+          idNumber: currentState.idNumber.trim(),
         );
 
         // Save tokens
@@ -116,10 +116,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           return;
         }
 
-        // Call API with login code
+        // Call API with login code (trim whitespace)
         final response = await authApiService.loginWithLoginCode(
-          loginCode: currentState.loginCode,
-          idNumber: currentState.idNumber,
+          loginCode: currentState.loginCode.trim(),
+          idNumber: currentState.idNumber.trim(),
         );
 
         // Save tokens
