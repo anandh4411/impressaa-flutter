@@ -52,27 +52,55 @@ class AppRouter {
             } else if (extra is Map) {
               dataMap = Map<String, dynamic>.from(extra);
             } else {
+              print('ERROR: extra is not a Map: ${extra.runtimeType}');
               return const FormPage();
             }
 
-            final formResponse = dataMap['formResponse'] as FormApiResponse?;
+            final formResponse = dataMap['formResponse'];
             final formDataRaw = dataMap['formData'];
-            final photo = dataMap['photo'] as File?;
+            final photosRaw = dataMap['photos'];
+
+            print('formResponse type: ${formResponse?.runtimeType}');
+            print('formDataRaw type: ${formDataRaw?.runtimeType}');
+            print('photosRaw type: ${photosRaw?.runtimeType}');
 
             if (formResponse == null || formDataRaw == null) {
+              print('ERROR: Missing formResponse or formData');
               return const FormPage();
             }
 
-            final formData = formDataRaw is Map<String, dynamic>
-                ? formDataRaw
-                : Map<String, dynamic>.from(formDataRaw as Map);
+            if (formResponse is! FormApiResponse) {
+              print('ERROR: formResponse is not FormApiResponse: ${formResponse.runtimeType}');
+              return const FormPage();
+            }
 
+            // Convert formData - keys can be int or String
+            final Map<String, dynamic> formData = {};
+            if (formDataRaw is Map) {
+              formDataRaw.forEach((key, value) {
+                formData[key.toString()] = value;
+              });
+            }
+
+            // Convert photos map
+            final Map<dynamic, File> photos = {};
+            if (photosRaw is Map) {
+              photosRaw.forEach((key, value) {
+                if (value is File) {
+                  photos[key] = value;
+                }
+              });
+            }
+
+            print('Successfully parsed data, creating preview page');
             return FormPreviewPage(
               formResponse: formResponse,
               formData: formData,
-              photo: photo,
+              photos: photos,
             );
-          } catch (e) {
+          } catch (e, stackTrace) {
+            print('ERROR in preview route: $e');
+            print('Stack trace: $stackTrace');
             return const FormPage();
           }
         },

@@ -14,13 +14,13 @@ import 'state/form_state.dart';
 class FormPreviewPage extends StatelessWidget {
   final FormApiResponse formResponse;
   final Map<String, dynamic> formData;
-  final File? photo;
+  final Map<dynamic, File> photos;
 
   const FormPreviewPage({
     super.key,
     required this.formResponse,
     required this.formData,
-    this.photo,
+    required this.photos,
   });
 
   @override
@@ -33,7 +33,7 @@ class FormPreviewPage extends StatelessWidget {
       child: _FormPreviewView(
         formResponse: formResponse,
         formData: formData,
-        photo: photo,
+        photos: photos,
       ),
     );
   }
@@ -42,12 +42,12 @@ class FormPreviewPage extends StatelessWidget {
 class _FormPreviewView extends StatefulWidget {
   final FormApiResponse formResponse;
   final Map<String, dynamic> formData;
-  final File? photo;
+  final Map<dynamic, File> photos;
 
   const _FormPreviewView({
     required this.formResponse,
     required this.formData,
-    this.photo,
+    required this.photos,
   });
 
   @override
@@ -188,14 +188,26 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Photo Preview (starts directly, no heading)
-                        if (widget.photo != null) ...[
-                          _buildPhotoPreview(widget.photo!),
-                          const SizedBox(height: 24),
-                        ],
+                        // Photo Previews (for all file fields)
+                        ...widget.formResponse.fields
+                            .where((field) => field.type == FormFieldType.file)
+                            .map((field) {
+                          final photo = widget.photos[field.id];
+                          if (photo != null) {
+                            return Column(
+                              children: [
+                                _buildPhotoPreview(field, photo),
+                                const SizedBox(height: 24),
+                              ],
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        }),
 
-                        // Form Data Preview
-                        ...widget.formResponse.fields.map((field) {
+                        // Form Data Preview (exclude file fields)
+                        ...widget.formResponse.fields
+                            .where((field) => field.type != FormFieldType.file)
+                            .map((field) {
                           final value = widget.formData[field.id.toString()];
                           if (value == null ||
                               value.toString().trim().isEmpty) {
@@ -315,16 +327,29 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
     );
   }
 
-  Widget _buildPhotoPreview(File photoFile) {
+  Widget _buildPhotoPreview(FormFieldModel field, File photoFile) {
+    // Parse aspect ratio from field
+    double aspectRatio = 35 / 45; // Default
+    if (field.aspectRatio != null) {
+      final parts = field.aspectRatio!.split(':');
+      if (parts.length == 2) {
+        final width = double.tryParse(parts[0]);
+        final height = double.tryParse(parts[1]);
+        if (width != null && height != null && height != 0) {
+          aspectRatio = width / height;
+        }
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'ID Card Photo',
-              style: TextStyle(
+            Text(
+              field.label,
+              style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
@@ -346,7 +371,7 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '35mm × 45mm',
+                    field.aspectRatio ?? '35:45',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -371,7 +396,7 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: AspectRatio(
-              aspectRatio: 35 / 45,
+              aspectRatio: aspectRatio,
               child: Image.file(
                 photoFile,
                 fit: BoxFit.cover,

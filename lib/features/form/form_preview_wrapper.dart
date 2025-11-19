@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -18,10 +19,21 @@ class FormPreviewWrapper extends StatelessWidget {
       return _buildErrorPage(context);
     }
 
+    // Convert photos map
+    final photosRaw = extra['photos'];
+    final Map<dynamic, File> photos = {};
+    if (photosRaw is Map) {
+      photosRaw.forEach((key, value) {
+        if (value is File) {
+          photos[key] = value;
+        }
+      });
+    }
+
     return FormPreviewPage(
       formResponse: extra['formResponse'] as FormApiResponse,
       formData: extra['formData'] as Map<String, dynamic>,
-      photo: extra['photo'] as dynamic,
+      photos: photos,
     );
   }
 
