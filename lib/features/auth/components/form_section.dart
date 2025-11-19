@@ -191,7 +191,7 @@ class _FormSectionState extends State<FormSection> {
                       placeholder: const Text('ID Number'),
                       initialValue: currentState.idNumber,
                       enabled: !isLoading,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.text,
                       onChanged: (value) {
                         context.read<AuthBloc>().add(AuthIdNumberChanged(value));
                       },

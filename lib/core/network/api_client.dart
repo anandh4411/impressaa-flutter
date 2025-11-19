@@ -141,9 +141,15 @@ class ApiClient {
       case DioExceptionType.badResponse:
         final data = error.response?.data;
         if (data is Map<String, dynamic>) {
+          // API returns error in nested structure: { success: false, error: { message: '...' } }
+          final errorData = data['error'] as Map<String, dynamic>?;
+          final message = errorData?['message'] ??
+                         data['message'] ??
+                         'An error occurred';
+
           return ApiException(
             ApiError(
-              message: data['message'] ?? 'An error occurred',
+              message: message,
               statusCode: error.response?.statusCode,
               details: data,
             ),
