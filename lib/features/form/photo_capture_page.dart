@@ -8,10 +8,12 @@ import 'package:image/image.dart' as img;
 
 class PhotoCapturePage extends StatefulWidget {
   final String? formId;
+  final String? aspectRatio; // e.g., "35:45"
 
   const PhotoCapturePage({
     super.key,
     this.formId,
+    this.aspectRatio,
   });
 
   @override
@@ -26,15 +28,31 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   File? _capturedImage;
   bool _hasShownGuidelines = false; // Track if modal was shown
 
-  // Photo size requirements (from backend in future)
-  static const int _photoWidthMM = 35; // Width in millimeters
-  static const int _photoHeightMM = 45; // Height in millimeters
-  static const double _photoAspectRatio = 35 / 45; // ~0.778
+  // Photo aspect ratio (parsed from widget.aspectRatio or default)
+  late final double _photoAspectRatio;
 
   @override
   void initState() {
     super.initState();
+    _parseAspectRatio();
     _initializeCamera();
+  }
+
+  void _parseAspectRatio() {
+    // Parse aspect ratio from widget (e.g., "35:45" -> 35/45)
+    if (widget.aspectRatio != null) {
+      final parts = widget.aspectRatio!.split(':');
+      if (parts.length == 2) {
+        final width = double.tryParse(parts[0]);
+        final height = double.tryParse(parts[1]);
+        if (width != null && height != null && height != 0) {
+          _photoAspectRatio = width / height;
+          return;
+        }
+      }
+    }
+    // Default to 35:45 ratio
+    _photoAspectRatio = 35 / 45;
   }
 
   Future<void> _initializeCamera() async {
@@ -175,7 +193,7 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Required Size: $_photoWidthMM mm × $_photoHeightMM mm',
+                        'Aspect Ratio: ${widget.aspectRatio ?? "35:45"}',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -269,7 +287,7 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     }
 
     // Calculate crop dimensions for aspect ratio
-    const targetAspectRatio = _photoAspectRatio;
+    final targetAspectRatio = _photoAspectRatio;
     final currentAspectRatio = originalImage.width / originalImage.height;
 
     int cropWidth;
@@ -467,7 +485,7 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Required: $_photoWidthMM mm × $_photoHeightMM mm',
+                          'Ratio: ${widget.aspectRatio ?? "35:45"}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,

@@ -44,6 +44,7 @@ class FormFieldModel {
   final FormValidation? validation;
   final String? defaultValue;
   final int order;
+  final String? aspectRatio; // For file/image fields (e.g., "35:45")
 
   const FormFieldModel({
     required this.id,
@@ -57,6 +58,7 @@ class FormFieldModel {
     this.validation,
     this.defaultValue,
     required this.order,
+    this.aspectRatio,
   });
 
   factory FormFieldModel.fromJson(Map<String, dynamic> json) {
@@ -78,6 +80,7 @@ class FormFieldModel {
           : null,
       defaultValue: json['defaultValue'],
       order: json['order'] ?? 0,
+      aspectRatio: json['aspectRatio'],
     );
   }
 }

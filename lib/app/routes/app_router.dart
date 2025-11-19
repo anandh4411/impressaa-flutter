@@ -28,7 +28,11 @@ class AppRouter {
         path: '/form/photo',
         builder: (context, state) {
           final formId = state.uri.queryParameters['formId'];
-          return PhotoCapturePage(formId: formId);
+          final aspectRatio = state.extra as String?; // Aspect ratio passed via extra
+          return PhotoCapturePage(
+            formId: formId,
+            aspectRatio: aspectRatio,
+          );
         },
       ),
       GoRoute(

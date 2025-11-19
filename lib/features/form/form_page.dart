@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../core/di/injection.dart';
 import 'data/form_api_service.dart';
+import 'data/form_models.dart';
 import '../../core/storage/auth_storage.dart';
 import 'components/dynamic_form_field.dart';
 import 'state/form_bloc.dart';
@@ -37,7 +38,7 @@ class _FormPageView extends StatefulWidget {
 class _FormPageViewState extends State<_FormPageView> {
   final formKey = GlobalKey<ShadFormState>();
   final scrollController = ScrollController();
-  File? _capturedPhoto;
+  final Map<dynamic, File> _capturedPhotos = {}; // Map field ID to captured photo
 
   @override
   void dispose() {
@@ -169,26 +170,32 @@ class _FormPageViewState extends State<_FormPageView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Photo Section
-                  _buildPhotoSection(),
-                  const SizedBox(height: 24),
+                  // Camera/Photo Sections (for file type fields)
+                  ...state.fields
+                      .where((field) => field.type == FormFieldType.file)
+                      .map((field) => Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: _buildPhotoSection(field),
+                          )),
 
-                  // Form Fields
-                  ...state.fields.map(
-                    (field) => Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: DynamicFormField(
-                        field: field,
-                        value: state.formData[field.id],
-                        onChanged: (value) {
-                          context.read<DynamicFormBloc>().add(
-                                DynamicFormFieldChanged(
-                                    fieldId: field.id, value: value),
-                              );
-                        },
+                  // Form Fields (exclude file type as they're handled above)
+                  ...state.fields
+                      .where((field) => field.type != FormFieldType.file)
+                      .map(
+                        (field) => Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: DynamicFormField(
+                            field: field,
+                            value: state.formData[field.id],
+                            onChanged: (value) {
+                              context.read<DynamicFormBloc>().add(
+                                    DynamicFormFieldChanged(
+                                        fieldId: field.id, value: value),
+                                  );
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
 
                   // Spacing before button
                   const SizedBox(height: 32),
@@ -213,8 +220,22 @@ class _FormPageViewState extends State<_FormPageView> {
     );
   }
 
-  Widget _buildPhotoSection() {
+  Widget _buildPhotoSection(FormFieldModel field) {
     final theme = ShadTheme.of(context);
+    final capturedPhoto = _capturedPhotos[field.id];
+
+    // Parse aspect ratio from field (e.g., "35:45" -> 35/45)
+    double aspectRatio = 35 / 45; // Default
+    if (field.aspectRatio != null) {
+      final parts = field.aspectRatio!.split(':');
+      if (parts.length == 2) {
+        final width = double.tryParse(parts[0]);
+        final height = double.tryParse(parts[1]);
+        if (width != null && height != null && height != 0) {
+          aspectRatio = width / height;
+        }
+      }
+    }
 
     return Container(
       width: double.infinity,
@@ -238,38 +259,40 @@ class _FormPageViewState extends State<_FormPageView> {
               ),
               const SizedBox(width: 8),
               Text(
-                'ID Card Photo',
+                field.label,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.foreground,
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  'Required',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.red.shade700,
+              if (field.required) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Required',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.red.shade700,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 12),
-          if (_capturedPhoto == null)
+          if (capturedPhoto == null)
             GestureDetector(
-              onTap: _openCamera,
+              onTap: () => _openCamera(field),
               child: Container(
                 width: double.infinity,
                 height: 200,
@@ -330,9 +353,9 @@ class _FormPageViewState extends State<_FormPageView> {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(6),
                           child: AspectRatio(
-                            aspectRatio: 35 / 45, // Exact ratio used everywhere
+                            aspectRatio: aspectRatio,
                             child: Image.file(
-                              _capturedPhoto!,
+                              capturedPhoto,
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -346,7 +369,7 @@ class _FormPageViewState extends State<_FormPageView> {
                             children: [
                               // Retake button
                               GestureDetector(
-                                onTap: _openCamera,
+                                onTap: () => _openCamera(field),
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
@@ -365,7 +388,7 @@ class _FormPageViewState extends State<_FormPageView> {
                               GestureDetector(
                                 onTap: () {
                                   setState(() {
-                                    _capturedPhoto = null;
+                                    _capturedPhotos.remove(field.id);
                                   });
                                 },
                                 child: Container(
@@ -425,32 +448,41 @@ class _FormPageViewState extends State<_FormPageView> {
     );
   }
 
-  Future<void> _openCamera() async {
-    final result = await context.push<File>('/form/photo');
+  Future<void> _openCamera(FormFieldModel field) async {
+    // Pass aspect ratio to photo capture page
+    final result = await context.push<File>(
+      '/form/photo',
+      extra: field.aspectRatio,
+    );
     if (result != null && mounted) {
       setState(() {
-        _capturedPhoto = result;
+        _capturedPhotos[field.id] = result;
       });
     }
   }
 
   void _handlePreview(DynamicFormLoaded state) {
-    // Check if photo is captured first
-    if (_capturedPhoto == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please capture your ID photo before proceeding'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
-      // Scroll to top to show photo section
-      scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      return;
+    // Get all file type fields
+    final fileFields = state.fields.where((f) => f.type == FormFieldType.file);
+
+    // Check if all required photos are captured
+    for (final field in fileFields) {
+      if (field.required && !_capturedPhotos.containsKey(field.id)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please capture ${field.label} before proceeding'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        // Scroll to top to show photo sections
+        scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        return;
+      }
     }
 
     // Validate the form
@@ -477,7 +509,7 @@ class _FormPageViewState extends State<_FormPageView> {
       context.push('/form/preview', extra: {
         'formResponse': state.formResponse,
         'formData': formData,
-        'photo': _capturedPhoto,
+        'photos': _capturedPhotos, // Pass all captured photos
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
