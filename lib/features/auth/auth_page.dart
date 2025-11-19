@@ -32,32 +32,44 @@ class _AuthPageView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     return CupertinoPageScaffold(
       backgroundColor: theme.colorScheme.primary,
-      child: SafeArea(
-        child: WaveBackground(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                const Expanded(
-                  flex: 3,
-                  child: HeaderSection(),
-                ),
-                Expanded(
-                  flex: 4,
-                  child: FormSection(
-                    onSuccess: () => context.go('/form'),
+      resizeToAvoidBottomInset: false,
+      child: Stack(
+        children: [
+          // Static background
+          const WaveBackground(child: SizedBox.expand()),
+
+          // Content
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(20, 20, 20, bottomPadding + 20),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight - 40),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 40),
+                        const HeaderSection(),
+                        const SizedBox(height: 40),
+                        FormSection(onSuccess: () => context.go('/form')),
+                        if (bottomPadding == 0) ...[
+                          const SizedBox(height: 32),
+                          const HelpSection(),
+                        ],
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16), // for help section
-                const HelpSection(), // for help section
-                const SizedBox(height: 8), // for help section
-              ],
+                );
+              },
             ),
           ),
-        ),
+        ],
       ),
     );
   }
