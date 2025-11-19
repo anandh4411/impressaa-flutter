@@ -88,7 +88,6 @@ class FormConfigModel {
   final String name;
   final String? description;
   final String? institutionName;
-  final List<FormFieldModel> fields;
 
   const FormConfigModel({
     required this.id,
@@ -96,7 +95,6 @@ class FormConfigModel {
     required this.name,
     this.description,
     this.institutionName,
-    required this.fields,
   });
 
   factory FormConfigModel.fromJson(Map<String, dynamic> json) {
@@ -106,10 +104,6 @@ class FormConfigModel {
       name: json['name'],
       description: json['description'],
       institutionName: json['institutionName'],
-      fields: (json['fields'] as List)
-          .map((field) => FormFieldModel.fromJson(field))
-          .toList()
-        ..sort((a, b) => a.order.compareTo(b.order)),
     );
   }
 }
