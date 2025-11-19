@@ -55,6 +55,15 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     _photoAspectRatio = 35 / 45;
   }
 
+  String _formatAspectRatio(String ratio) {
+    // Convert "35:45" to "35mm × 45mm"
+    final parts = ratio.split(':');
+    if (parts.length == 2) {
+      return '${parts[0]}mm × ${parts[1]}mm';
+    }
+    return ratio;
+  }
+
   Future<void> _initializeCamera() async {
     try {
       _cameras = await availableCameras();
@@ -193,7 +202,7 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Aspect Ratio: ${widget.aspectRatio ?? "35:45"}',
+                        _formatAspectRatio(widget.aspectRatio ?? "35:45"),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -485,7 +494,7 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Ratio: ${widget.aspectRatio ?? "35:45"}',
+                          _formatAspectRatio(widget.aspectRatio ?? "35:45"),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
