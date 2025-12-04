@@ -454,16 +454,12 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
                   ),
                 ),
 
-                // Face circle guide overlay
+                // Face outline guide overlay
                 Center(
-                  child: CustomPaint(
-                    size: Size(
-                      MediaQuery.of(context).size.width * 0.75,
-                      MediaQuery.of(context).size.height * 0.4,
-                    ),
-                    painter: FaceOutlinePainter(
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
+                  child: Image.asset(
+                    'assets/images/outline.png',
+                    width: MediaQuery.of(context).size.width * 0.85,
+                    fit: BoxFit.contain,
                   ),
                 ),
 
@@ -606,68 +602,4 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
       ],
     );
   }
-}
-
-// Custom painter for face outline guide
-class FaceOutlinePainter extends CustomPainter {
-  final Color color;
-
-  FaceOutlinePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0;
-
-    final center = Offset(size.width / 2, size.height / 2);
-
-    // Position circle higher up
-    final circleCenter = Offset(
-      center.dx,
-      center.dy - (size.height * 0.15),
-    );
-
-    // Circle diameter should be about 60% of the container width
-    final circleDiameter = size.width * 0.6;
-    final circleRadius = circleDiameter / 2;
-
-    // Draw the main circle
-    canvas.drawCircle(circleCenter, circleRadius, paint);
-
-    // Guide text at top
-    final textSpan = TextSpan(
-      text: 'Center your face here',
-      style: TextStyle(
-        color: color,
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        shadows: [
-          Shadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            offset: const Offset(0, 1),
-            blurRadius: 3,
-          ),
-        ],
-      ),
-    );
-
-    final textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-    );
-
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(
-        center.dx - textPainter.width / 2,
-        circleCenter.dy - circleRadius - 35,
-      ),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
