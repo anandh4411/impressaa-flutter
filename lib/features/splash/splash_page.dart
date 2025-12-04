@@ -90,34 +90,16 @@ class _SplashPageState extends State<SplashPage>
       backgroundColor: theme.colorScheme.background,
       child: SafeArea(
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Logo
-              Image.asset(
-                'assets/images/logo.png',
-                width: 120,
-                height: 120,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Image.asset(
+                'assets/images/logo-with-title.png',
+                width: 200,
                 fit: BoxFit.contain,
               ),
-
-              const SizedBox(height: 24),
-
-              // Title with animation - right below logo
-              SlideTransition(
-                position: _slideAnimation,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Text(
-                    'Impressaa',
-                    style: theme.textTheme.h1?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
