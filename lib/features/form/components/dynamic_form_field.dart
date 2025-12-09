@@ -37,7 +37,7 @@ class DynamicFormField extends StatelessWidget {
   Widget _buildTextInput() {
     return ShadInputFormField(
       id: field.id,
-      label: Text(field.label),
+      label: _buildLabel(),
       placeholder: field.placeholder != null ? Text(field.placeholder!) : null,
       description: field.helpText != null ? Text(field.helpText!) : null,
       keyboardType: _getKeyboardType(),
@@ -50,7 +50,7 @@ class DynamicFormField extends StatelessWidget {
   Widget _buildTextArea() {
     return ShadTextareaFormField(
       id: field.id,
-      label: Text(field.label),
+      label: _buildLabel(),
       placeholder: field.placeholder != null ? Text(field.placeholder!) : null,
       description: field.helpText != null ? Text(field.helpText!) : null,
       onChanged: onChanged,
@@ -61,7 +61,7 @@ class DynamicFormField extends StatelessWidget {
   Widget _buildSelect() {
     return ShadSelectFormField<String>(
       id: field.id,
-      label: Text(field.label),
+      label: _buildLabel(),
       placeholder: Text(field.placeholder ?? 'Select ${field.label}'),
       description: field.helpText != null ? Text(field.helpText!) : null,
       selectedOptionBuilder: (context, value) => Text(value),
@@ -77,11 +77,32 @@ class DynamicFormField extends StatelessWidget {
   Widget _buildDatePicker() {
     return ShadDatePickerFormField(
       id: field.id,
-      label: Text(field.label),
+      label: _buildLabel(),
       description: field.helpText != null ? Text(field.helpText!) : null,
       onChanged: onChanged,
       validator: (value) => _validateField(value),
     );
+  }
+
+  Widget _buildLabel() {
+    if (field.required) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(field.label),
+          const SizedBox(width: 4),
+          const Text(
+            '*',
+            style: TextStyle(
+              color: Colors.red,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      );
+    }
+    return Text(field.label);
   }
 
   Widget _buildFilePicker() {

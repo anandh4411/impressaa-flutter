@@ -9,6 +9,7 @@ class HeaderSection extends StatelessWidget {
     final theme = ShadTheme.of(context);
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -22,9 +23,9 @@ class HeaderSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Enter your verification code to access the ID card form',
+          'Login to access your ID card form',
           style: theme.textTheme.p?.copyWith(
-            color: theme.colorScheme.primaryForeground.withOpacity(0.8),
+            color: theme.colorScheme.primaryForeground.withValues(alpha: 0.8),
           ),
         ),
       ],

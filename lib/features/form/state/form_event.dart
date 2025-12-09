@@ -1,9 +1,6 @@
 abstract class DynamicFormEvent {}
 
-class DynamicFormLoadRequested extends DynamicFormEvent {
-  final String institutionId;
-  DynamicFormLoadRequested(this.institutionId);
-}
+class DynamicFormLoadRequested extends DynamicFormEvent {}
 
 class DynamicFormFieldChanged extends DynamicFormEvent {
   final String fieldId;
@@ -18,5 +15,7 @@ class DynamicFormFieldChanged extends DynamicFormEvent {
 class DynamicFormValidationRequested extends DynamicFormEvent {}
 
 class DynamicFormPreviewRequested extends DynamicFormEvent {}
+
+class DynamicFormSubmitted extends DynamicFormEvent {}
 
 class DynamicFormReset extends DynamicFormEvent {}

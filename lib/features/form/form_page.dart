@@ -3,26 +3,26 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:impressaa/features/form/data/form_models.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import '../../core/di/injection.dart';
+import 'data/form_api_service.dart';
+import 'data/form_models.dart';
+import '../../core/storage/auth_storage.dart';
 import 'components/dynamic_form_field.dart';
 import 'state/form_bloc.dart';
 import 'state/form_event.dart';
 import 'state/form_state.dart';
 
 class FormPage extends StatelessWidget {
-  final String? institutionId;
-
-  const FormPage({
-    super.key,
-    this.institutionId,
-  });
+  const FormPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => DynamicFormBloc()
-        ..add(DynamicFormLoadRequested(institutionId ?? 'inst_123')),
+      create: (context) => DynamicFormBloc(
+        formApiService: getIt<FormApiService>(),
+        authStorage: getIt<AuthStorage>(),
+      )..add(DynamicFormLoadRequested()),
       child: const _FormPageView(),
     );
   }
@@ -38,7 +38,7 @@ class _FormPageView extends StatefulWidget {
 class _FormPageViewState extends State<_FormPageView> {
   final formKey = GlobalKey<ShadFormState>();
   final scrollController = ScrollController();
-  File? _capturedPhoto;
+  final Map<dynamic, File> _capturedPhotos = {}; // Map field ID to captured photo
 
   @override
   void dispose() {
@@ -67,7 +67,7 @@ class _FormPageViewState extends State<_FormPageView> {
           builder: (context, state) {
             if (state is DynamicFormLoaded) {
               return Text(
-                state.formConfig.title,
+                state.formConfig?.name ?? 'Form',
                 style: TextStyle(
                   color: theme.colorScheme.foreground,
                   fontWeight: FontWeight.w600,
@@ -94,19 +94,11 @@ class _FormPageViewState extends State<_FormPageView> {
             }
 
             if (state is DynamicFormValidationError) {
-              // Get the current loaded state from the bloc
-              final bloc = context.read<DynamicFormBloc>();
-              // For validation errors, we need to find the loaded state
-              // This is a bit tricky, so let's handle it differently
-              return _buildFormView(DynamicFormLoaded(
-                formConfig: const FormConfigModel(
-                  id: 'temp',
-                  institutionId: 'temp',
-                  title: 'Form',
-                  fields: [],
-                ),
-                formData: {},
-              ));
+              // Show validation errors - this state doesn't persist form data
+              // so we should handle this better in the UI
+              return Center(
+                child: Text('Validation errors occurred'),
+              );
             }
 
             return const Center(child: CircularProgressIndicator());
@@ -156,13 +148,13 @@ class _FormPageViewState extends State<_FormPageView> {
     return Column(
       children: [
         // Form Header (optional description)
-        if (state.formConfig.description != null)
+        if (state.formConfig?.description != null)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             color: theme.colorScheme.muted.withOpacity(0.5),
             child: Text(
-              state.formConfig.description!,
+              state.formConfig!.description!,
               style: theme.textTheme.muted,
               textAlign: TextAlign.center,
             ),
@@ -178,26 +170,32 @@ class _FormPageViewState extends State<_FormPageView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Photo Section
-                  _buildPhotoSection(),
-                  const SizedBox(height: 24),
+                  // Camera/Photo Sections (for file type fields)
+                  ...state.fields
+                      .where((field) => field.type == FormFieldType.file)
+                      .map((field) => Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: _buildPhotoSection(field),
+                          )),
 
-                  // Form Fields
-                  ...state.formConfig.fields.map(
-                    (field) => Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: DynamicFormField(
-                        field: field,
-                        value: state.formData[field.id],
-                        onChanged: (value) {
-                          context.read<DynamicFormBloc>().add(
-                                DynamicFormFieldChanged(
-                                    fieldId: field.id, value: value),
-                              );
-                        },
+                  // Form Fields (exclude file type as they're handled above)
+                  ...state.fields
+                      .where((field) => field.type != FormFieldType.file)
+                      .map(
+                        (field) => Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: DynamicFormField(
+                            field: field,
+                            value: state.formData[field.id],
+                            onChanged: (value) {
+                              context.read<DynamicFormBloc>().add(
+                                    DynamicFormFieldChanged(
+                                        fieldId: field.id, value: value),
+                                  );
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
 
                   // Spacing before button
                   const SizedBox(height: 32),
@@ -222,8 +220,22 @@ class _FormPageViewState extends State<_FormPageView> {
     );
   }
 
-  Widget _buildPhotoSection() {
+  Widget _buildPhotoSection(FormFieldModel field) {
     final theme = ShadTheme.of(context);
+    final capturedPhoto = _capturedPhotos[field.id];
+
+    // Parse aspect ratio from field (e.g., "35:45" -> 35/45)
+    double aspectRatio = 35 / 45; // Default
+    if (field.aspectRatio != null) {
+      final parts = field.aspectRatio!.split(':');
+      if (parts.length == 2) {
+        final width = double.tryParse(parts[0]);
+        final height = double.tryParse(parts[1]);
+        if (width != null && height != null && height != 0) {
+          aspectRatio = width / height;
+        }
+      }
+    }
 
     return Container(
       width: double.infinity,
@@ -247,38 +259,40 @@ class _FormPageViewState extends State<_FormPageView> {
               ),
               const SizedBox(width: 8),
               Text(
-                'ID Card Photo',
+                field.label,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.foreground,
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  'Required',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.red.shade700,
+              if (field.required) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Required',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.red.shade700,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 12),
-          if (_capturedPhoto == null)
+          if (capturedPhoto == null)
             GestureDetector(
-              onTap: _openCamera,
+              onTap: () => _openCamera(field),
               child: Container(
                 width: double.infinity,
                 height: 200,
@@ -321,55 +335,107 @@ class _FormPageViewState extends State<_FormPageView> {
               ),
             )
           else
-            Stack(
+            Column(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    _capturedPhoto!,
-                    width: double.infinity,
-                    height: 200,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: _openCamera,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.refresh,
-                            color: Colors.white,
-                            size: 20,
+                // Show photo in exact aspect ratio
+                Center(
+                  child: Container(
+                    width: 160, // Fixed width for consistency
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.border,
+                        width: 2,
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: AspectRatio(
+                            aspectRatio: aspectRatio,
+                            child: Image.file(
+                              capturedPhoto,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
+                        // Action buttons overlay
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Retake button
+                              GestureDetector(
+                                onTap: () => _openCamera(field),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    CupertinoIcons.refresh,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              // Remove button
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _capturedPhotos.remove(field.id);
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.8),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    CupertinoIcons.xmark,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Dimension badge below photo
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        size: 12,
+                        color: Colors.green.shade700,
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _capturedPhoto = null;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.8),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.xmark,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '35mm × 45mm',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green.shade700,
                         ),
                       ),
                     ],
@@ -382,32 +448,41 @@ class _FormPageViewState extends State<_FormPageView> {
     );
   }
 
-  Future<void> _openCamera() async {
-    final result = await context.push<File>('/form/photo');
+  Future<void> _openCamera(FormFieldModel field) async {
+    // Pass aspect ratio to photo capture page
+    final result = await context.push<File>(
+      '/form/photo',
+      extra: field.aspectRatio,
+    );
     if (result != null && mounted) {
       setState(() {
-        _capturedPhoto = result;
+        _capturedPhotos[field.id] = result;
       });
     }
   }
 
   void _handlePreview(DynamicFormLoaded state) {
-    // Check if photo is captured first
-    if (_capturedPhoto == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please capture your ID photo before proceeding'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
-      // Scroll to top to show photo section
-      scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      return;
+    // Get all file type fields
+    final fileFields = state.fields.where((f) => f.type == FormFieldType.file);
+
+    // Check if all required photos are captured
+    for (final field in fileFields) {
+      if (field.required && !_capturedPhotos.containsKey(field.id)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please capture ${field.label} before proceeding'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        // Scroll to top to show photo sections
+        scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        return;
+      }
     }
 
     // Validate the form
@@ -432,14 +507,14 @@ class _FormPageViewState extends State<_FormPageView> {
     // Navigate to preview page
     try {
       context.push('/form/preview', extra: {
-        'formConfig': state.formConfig,
+        'formResponse': state.formResponse,
         'formData': formData,
-        'photo': _capturedPhoto,
+        'photos': _capturedPhotos, // Pass all captured photos
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Navigation error: ${e.toString()}'),
+        const SnackBar(
+          content: Text('Navigation error'),
           backgroundColor: Colors.red,
         ),
       );
