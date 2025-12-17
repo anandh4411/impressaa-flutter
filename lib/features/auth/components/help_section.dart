@@ -5,9 +5,9 @@ import 'package:url_launcher/url_launcher.dart';
 class HelpSection extends StatelessWidget {
   const HelpSection({super.key});
 
-  // Replace with your actual phone number
-  static const String phoneNumber = '+919876543210';
-  static const String displayNumber = '+91 98765 43210';
+  // Customer care phone number
+  static const String phoneNumber = '+916238250500';
+  static const String displayNumber = '+91 62382 50500';
 
   @override
   Widget build(BuildContext context) {
