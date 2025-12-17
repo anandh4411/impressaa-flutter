@@ -294,13 +294,18 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   Future<File> _cropToAspectRatio(String imagePath) async {
     // Read the image
     final bytes = await File(imagePath).readAsBytes();
-    final originalImage = img.decodeImage(bytes);
+    var originalImage = img.decodeImage(bytes);
 
     if (originalImage == null) {
       return File(imagePath); // Return original if decode fails
     }
 
-    // Calculate crop dimensions for aspect ratio
+    // Apply EXIF orientation to get correct dimensions
+    // Phone cameras often save landscape with rotation metadata
+    originalImage = img.bakeOrientation(originalImage);
+
+    // Calculate crop dimensions for target aspect ratio (width:height)
+    // For 35:45, target is 0.778 (narrower than tall - portrait)
     final targetAspectRatio = _photoAspectRatio;
     final currentAspectRatio = originalImage.width / originalImage.height;
 
@@ -310,18 +315,21 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     int offsetY = 0;
 
     if (currentAspectRatio > targetAspectRatio) {
-      // Image is too wide, crop width
+      // Image is too wide relative to target, crop the width
+      // Keep full height, reduce width to match target ratio
       cropHeight = originalImage.height;
       cropWidth = (cropHeight * targetAspectRatio).round();
       offsetX = ((originalImage.width - cropWidth) / 2).round();
     } else {
-      // Image is too tall, crop height
+      // Image is too tall relative to target, crop the height
+      // Keep full width, reduce height to match target ratio
       cropWidth = originalImage.width;
       cropHeight = (cropWidth / targetAspectRatio).round();
+      // Center crop to match the on-screen guide that users align to
       offsetY = ((originalImage.height - cropHeight) / 2).round();
     }
 
-    // Crop the image from center
+    // Crop the image
     final croppedImage = img.copyCrop(
       originalImage,
       x: offsetX,
