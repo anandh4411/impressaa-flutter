@@ -122,6 +122,7 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
       context: context,
       barrierDismissible: false, // User must click OK
       builder: (context) => AlertDialog(
+        backgroundColor: theme.colorScheme.background,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -133,11 +134,12 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
               size: 24,
             ),
             const SizedBox(width: 12),
-            const Text(
+            Text(
               'Photo Guidelines',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
+                color: theme.colorScheme.foreground,
               ),
             ),
           ],
@@ -147,11 +149,12 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Please follow these guidelines for a perfect ID photo:',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.foreground,
                 ),
               ),
               const SizedBox(height: 16),
@@ -188,15 +191,15 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
+                  border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       CupertinoIcons.photo,
-                      color: Colors.blue.shade700,
+                      color: theme.colorScheme.primary,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -206,7 +209,7 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.blue.shade700,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
                     ),
@@ -230,13 +233,15 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   }
 
   Widget _buildModalInstructionItem(String text, IconData icon) {
+    final theme = ShadTheme.of(context);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
           icon,
           size: 20,
-          color: Colors.grey.shade700,
+          color: theme.colorScheme.mutedForeground,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -244,7 +249,7 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
             text,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey.shade800,
+              color: theme.colorScheme.foreground,
               height: 1.3,
             ),
           ),

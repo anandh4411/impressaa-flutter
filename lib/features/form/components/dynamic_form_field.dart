@@ -106,46 +106,52 @@ class DynamicFormField extends StatelessWidget {
   }
 
   Widget _buildFilePicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          field.label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            children: [
-              const Icon(Icons.upload_file, size: 32, color: Colors.grey),
-              const SizedBox(height: 8),
-              const Text(
-                'Tap to upload file',
-                style: TextStyle(color: Colors.grey),
+    return Builder(
+      builder: (context) {
+        final theme = ShadTheme.of(context);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              field.label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.foreground,
               ),
-              if (field.helpText != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  field.helpText!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: theme.colorScheme.border),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.upload_file, size: 32, color: theme.colorScheme.mutedForeground),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap to upload file',
+                    style: TextStyle(color: theme.colorScheme.mutedForeground),
                   ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
+                  if (field.helpText != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      field.helpText!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

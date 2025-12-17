@@ -331,6 +331,8 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
   }
 
   Widget _buildPhotoPreview(FormFieldModel field, File photoFile) {
+    final theme = ShadTheme.of(context);
+
     // Parse aspect ratio from field
     double aspectRatio = 35 / 45; // Default
     if (field.aspectRatio != null) {
@@ -352,9 +354,10 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
           children: [
             Text(
               field.label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
+                color: theme.colorScheme.foreground,
               ),
             ),
             Container(
@@ -392,7 +395,7 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.grey.shade300,
+              color: theme.colorScheme.border,
               width: 1,
             ),
           ),
@@ -414,6 +417,8 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
   }
 
   Widget _buildPreviewField(FormFieldModel field, dynamic value) {
+    final theme = ShadTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -421,15 +426,19 @@ class _FormPreviewPageState extends State<_FormPreviewView> {
         children: [
           Text(
             field.label,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 14,
+              color: theme.colorScheme.foreground,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value.toString(),
-            style: const TextStyle(fontSize: 16),
+            style: TextStyle(
+              fontSize: 16,
+              color: theme.colorScheme.foreground,
+            ),
           ),
           const SizedBox(height: 8),
           const Divider(),
