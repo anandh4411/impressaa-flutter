@@ -96,53 +96,59 @@ class _FormSectionState extends State<FormSection> {
                     Row(
                       children: [
                         Expanded(
-                          child: ShadButton.outline(
-                            onPressed: isLoading
-                                ? null
-                                : () {
-                                    context.read<AuthBloc>().add(
-                                          AuthLoginMethodChanged(
-                                              LoginMethod.loginCode),
-                                        );
-                                  },
-                            backgroundColor: currentState.currentMethod ==
-                                    LoginMethod.loginCode
-                                ? ShadTheme.of(context).colorScheme.primary
-                                : null,
-                            foregroundColor: currentState.currentMethod ==
-                                    LoginMethod.loginCode
-                                ? ShadTheme.of(context).colorScheme.primaryForeground
-                                : null,
-                            child: const Text(
-                              'Login Code',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 12),
+                          child: SizedBox(
+                            height: 48,
+                            child: ShadButton.outline(
+                              onPressed: isLoading
+                                  ? null
+                                  : () {
+                                      context.read<AuthBloc>().add(
+                                            AuthLoginMethodChanged(
+                                                LoginMethod.loginCode),
+                                          );
+                                    },
+                              backgroundColor: currentState.currentMethod ==
+                                      LoginMethod.loginCode
+                                  ? ShadTheme.of(context).colorScheme.primary
+                                  : null,
+                              foregroundColor: currentState.currentMethod ==
+                                      LoginMethod.loginCode
+                                  ? ShadTheme.of(context).colorScheme.primaryForeground
+                                  : null,
+                              child: const Text(
+                                'Login Code',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 12),
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: ShadButton.outline(
-                            onPressed: isLoading
-                                ? null
-                                : () {
-                                    context.read<AuthBloc>().add(
-                                          AuthLoginMethodChanged(
-                                              LoginMethod.institutionCode),
-                                        );
-                                  },
-                            backgroundColor: currentState.currentMethod ==
-                                    LoginMethod.institutionCode
-                                ? ShadTheme.of(context).colorScheme.primary
-                                : null,
-                            foregroundColor: currentState.currentMethod ==
-                                    LoginMethod.institutionCode
-                                ? ShadTheme.of(context).colorScheme.primaryForeground
-                                : null,
-                            child: const Text(
-                              'Institution\nCode',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 12, height: 1.2),
+                          child: SizedBox(
+                            height: 48,
+                            child: ShadButton.outline(
+                              onPressed: isLoading
+                                  ? null
+                                  : () {
+                                      context.read<AuthBloc>().add(
+                                            AuthLoginMethodChanged(
+                                                LoginMethod.institutionCode),
+                                          );
+                                    },
+                              backgroundColor: currentState.currentMethod ==
+                                      LoginMethod.institutionCode
+                                  ? ShadTheme.of(context).colorScheme.primary
+                                  : null,
+                              foregroundColor: currentState.currentMethod ==
+                                      LoginMethod.institutionCode
+                                  ? ShadTheme.of(context).colorScheme.primaryForeground
+                                  : null,
+                              child: const Text(
+                                'Institution\nCode',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 12, height: 1.2),
+                              ),
                             ),
                           ),
                         ),
