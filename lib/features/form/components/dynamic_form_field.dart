@@ -81,6 +81,11 @@ class DynamicFormField extends StatelessWidget {
       description: field.helpText != null ? Text(field.helpText!) : null,
       onChanged: onChanged,
       validator: (value) => _validateField(value),
+      // Enable dropdown for easy year/month selection
+      captionLayout: ShadCalendarCaptionLayout.dropdown,
+      // Set date range from 1900 to current year
+      fromMonth: DateTime(1900, 1),
+      toMonth: DateTime(DateTime.now().year, 12),
     );
   }
 
