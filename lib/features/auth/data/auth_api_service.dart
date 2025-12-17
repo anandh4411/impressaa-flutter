@@ -34,14 +34,12 @@ class AuthApiService {
     return apiResponse.data!;
   }
 
-  /// Login with login code + id number
+  /// Login with login code only
   Future<AuthTokenResponse> loginWithLoginCode({
     required String loginCode,
-    required String idNumber,
   }) async {
     final request = LoginWithLoginCodeRequest(
       loginCode: loginCode,
-      idNumber: idNumber,
     );
 
     final response = await apiClient.post(

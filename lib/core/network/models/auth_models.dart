@@ -40,17 +40,14 @@ class LoginWithInstitutionCodeRequest {
 /// Login request with login code
 class LoginWithLoginCodeRequest {
   final String loginCode;
-  final String idNumber;
 
   LoginWithLoginCodeRequest({
     required this.loginCode,
-    required this.idNumber,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'loginCode': loginCode,
-      'idNumber': idNumber,
     };
   }
 }

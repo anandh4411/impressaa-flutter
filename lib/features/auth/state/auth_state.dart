@@ -9,7 +9,7 @@ class AuthInitial extends AuthState {
   final String idNumber;
 
   AuthInitial({
-    this.currentMethod = LoginMethod.institutionCode,
+    this.currentMethod = LoginMethod.loginCode,
     this.institutionCode = '',
     this.loginCode = '',
     this.idNumber = '',

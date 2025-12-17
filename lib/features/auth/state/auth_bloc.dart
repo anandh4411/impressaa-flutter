@@ -110,16 +110,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           emit(currentState);
           return;
         }
-        if (currentState.idNumber.isEmpty) {
-          emit(AuthFailure('Please enter your ID number'));
-          emit(currentState);
-          return;
-        }
 
         // Call API with login code (trim whitespace)
         final response = await authApiService.loginWithLoginCode(
           loginCode: currentState.loginCode.trim(),
-          idNumber: currentState.idNumber.trim(),
         );
 
         // Save tokens

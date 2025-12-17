@@ -47,14 +47,6 @@ class _FormSectionState extends State<FormSection> {
         );
         return;
       }
-      if (state.idNumber.trim().isEmpty) {
-        ToastHelper.showError(
-          context,
-          title: 'Validation Error',
-          description: 'Please enter ID number',
-        );
-        return;
-      }
     }
 
     // All fields valid, submit
@@ -66,8 +58,7 @@ class _FormSectionState extends State<FormSection> {
       return state.institutionCode.trim().isNotEmpty &&
              state.idNumber.trim().isNotEmpty;
     } else {
-      return state.loginCode.trim().isNotEmpty &&
-             state.idNumber.trim().isNotEmpty;
+      return state.loginCode.trim().isNotEmpty;
     }
   }
 
@@ -111,32 +102,6 @@ class _FormSectionState extends State<FormSection> {
                                 : () {
                                     context.read<AuthBloc>().add(
                                           AuthLoginMethodChanged(
-                                              LoginMethod.institutionCode),
-                                        );
-                                  },
-                            backgroundColor: currentState.currentMethod ==
-                                    LoginMethod.institutionCode
-                                ? ShadTheme.of(context).colorScheme.primary
-                                : null,
-                            foregroundColor: currentState.currentMethod ==
-                                    LoginMethod.institutionCode
-                                ? ShadTheme.of(context).colorScheme.primaryForeground
-                                : null,
-                            child: const Text(
-                              'Institution\nCode',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 12, height: 1.2),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ShadButton.outline(
-                            onPressed: isLoading
-                                ? null
-                                : () {
-                                    context.read<AuthBloc>().add(
-                                          AuthLoginMethodChanged(
                                               LoginMethod.loginCode),
                                         );
                                   },
@@ -152,6 +117,32 @@ class _FormSectionState extends State<FormSection> {
                               'Login Code',
                               textAlign: TextAlign.center,
                               style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ShadButton.outline(
+                            onPressed: isLoading
+                                ? null
+                                : () {
+                                    context.read<AuthBloc>().add(
+                                          AuthLoginMethodChanged(
+                                              LoginMethod.institutionCode),
+                                        );
+                                  },
+                            backgroundColor: currentState.currentMethod ==
+                                    LoginMethod.institutionCode
+                                ? ShadTheme.of(context).colorScheme.primary
+                                : null,
+                            foregroundColor: currentState.currentMethod ==
+                                    LoginMethod.institutionCode
+                                ? ShadTheme.of(context).colorScheme.primaryForeground
+                                : null,
+                            child: const Text(
+                              'Institution\nCode',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 12, height: 1.2),
                             ),
                           ),
                         ),
@@ -172,6 +163,17 @@ class _FormSectionState extends State<FormSection> {
                               .add(AuthInstitutionCodeChanged(value));
                         },
                       ),
+                      const SizedBox(height: 16),
+                      // ID Number field (only for institution code login)
+                      ShadInput(
+                        placeholder: const Text('ID Number'),
+                        initialValue: currentState.idNumber,
+                        enabled: !isLoading,
+                        keyboardType: TextInputType.text,
+                        onChanged: (value) {
+                          context.read<AuthBloc>().add(AuthIdNumberChanged(value));
+                        },
+                      ),
                     ] else ...[
                       ShadInput(
                         placeholder: const Text('Login Code'),
@@ -184,18 +186,6 @@ class _FormSectionState extends State<FormSection> {
                         },
                       ),
                     ],
-                    const SizedBox(height: 16),
-
-                    // ID Number field (common for both methods)
-                    ShadInput(
-                      placeholder: const Text('ID Number'),
-                      initialValue: currentState.idNumber,
-                      enabled: !isLoading,
-                      keyboardType: TextInputType.text,
-                      onChanged: (value) {
-                        context.read<AuthBloc>().add(AuthIdNumberChanged(value));
-                      },
-                    ),
                     const SizedBox(height: 24),
 
                     // Submit button - disabled when form is invalid or loading
