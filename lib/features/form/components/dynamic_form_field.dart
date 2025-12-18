@@ -40,6 +40,7 @@ class DynamicFormField extends StatelessWidget {
       label: _buildLabel(),
       placeholder: field.placeholder != null ? Text(field.placeholder!) : null,
       description: field.helpText != null ? Text(field.helpText!) : null,
+      initialValue: value?.toString(),
       keyboardType: _getKeyboardType(),
       inputFormatters: _getInputFormatters(),
       onChanged: onChanged,
@@ -53,6 +54,7 @@ class DynamicFormField extends StatelessWidget {
       label: _buildLabel(),
       placeholder: field.placeholder != null ? Text(field.placeholder!) : null,
       description: field.helpText != null ? Text(field.helpText!) : null,
+      initialValue: value?.toString(),
       onChanged: onChanged,
       validator: (value) => _validateField(value),
     );
@@ -64,6 +66,7 @@ class DynamicFormField extends StatelessWidget {
       label: _buildLabel(),
       placeholder: Text(field.placeholder ?? 'Select ${field.label}'),
       description: field.helpText != null ? Text(field.helpText!) : null,
+      initialValue: value?.toString(),
       selectedOptionBuilder: (context, value) => Text(value),
       options: field.options
               ?.map((option) => ShadOption(value: option, child: Text(option)))

@@ -32,11 +32,16 @@ class DynamicFormBloc extends Bloc<DynamicFormEvent, DynamicFormState> {
       // Call real API to get form
       final formResponse = await formApiService.getForm();
 
-      // Initialize form data with prefilled values
+      // Initialize form data with prefilled values by matching field labels
       final initialFormData = <String, dynamic>{};
-
-      // You could prefill certain fields from formResponse.prefilledData
-      // For example: initialFormData['name'] = formResponse.prefilledData.personName;
+      for (final field in formResponse.fields) {
+        final prefilledValue =
+            formResponse.prefilledData.getValueForLabel(field.label);
+        if (prefilledValue != null && prefilledValue.isNotEmpty) {
+          // Use field.id.toString() as key for consistency
+          initialFormData[field.id.toString()] = prefilledValue;
+        }
+      }
 
       emit(DynamicFormLoaded(
         formResponse: formResponse,

@@ -115,15 +115,37 @@ class FormConfigModel {
 }
 
 /// Prefilled data from API
+/// Contains personName, class, and dynamic field values keyed by field label
 class PrefilledData {
   final String personName;
+  final String? className; // 'class' is reserved in Dart
+  final Map<String, dynamic> fieldValues; // Keys are field labels
 
-  PrefilledData({required this.personName});
+  PrefilledData({
+    required this.personName,
+    this.className,
+    required this.fieldValues,
+  });
 
   factory PrefilledData.fromJson(Map<String, dynamic> json) {
+    // Extract known fixed fields
+    final personName = json['personName'] ?? '';
+    final className = json['class'];
+
+    // Store entire map for field matching by label
+    final fieldValues = Map<String, dynamic>.from(json);
+
     return PrefilledData(
-      personName: json['personName'] ?? '',
+      personName: personName,
+      className: className,
+      fieldValues: fieldValues,
     );
+  }
+
+  /// Get prefilled value for a field by its label
+  String? getValueForLabel(String label) {
+    final value = fieldValues[label];
+    return value?.toString();
   }
 }
 

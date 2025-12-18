@@ -188,11 +188,12 @@ class _FormPageViewState extends State<_FormPageView> {
                           padding: const EdgeInsets.only(bottom: 20),
                           child: DynamicFormField(
                             field: field,
-                            value: state.formData[field.id],
+                            value: state.formData[field.id.toString()],
                             onChanged: (value) {
                               context.read<DynamicFormBloc>().add(
                                     DynamicFormFieldChanged(
-                                        fieldId: field.id, value: value),
+                                        fieldId: field.id.toString(),
+                                        value: value),
                                   );
                             },
                           ),
