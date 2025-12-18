@@ -43,6 +43,9 @@ dependencies:
   # Image Processing
   image: ^4.1.7
 
+  # Image Picker (for gallery access)
+  image_picker: ^1.0.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

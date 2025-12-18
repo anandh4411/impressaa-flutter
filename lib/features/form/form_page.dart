@@ -3,7 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:image/image.dart' as img;
 import '../../core/di/injection.dart';
 import 'data/form_api_service.dart';
 import 'data/form_models.dart';
@@ -291,49 +293,52 @@ class _FormPageViewState extends State<_FormPageView> {
           ),
           const SizedBox(height: 12),
           if (capturedPhoto == null)
-            GestureDetector(
-              onTap: () => _openCamera(field),
-              child: Container(
-                width: double.infinity,
-                height: 200,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.muted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: theme.colorScheme.border,
-                    width: 1,
-                    style: BorderStyle.solid,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      CupertinoIcons.camera_fill,
-                      size: 48,
-                      color: theme.colorScheme.mutedForeground,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Tap to capture photo',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.foreground,
+            // Show camera only or camera + gallery based on accessGallery flag
+            field.accessGallery
+                ? _buildCameraGalleryOptions(field, theme)
+                : GestureDetector(
+                    onTap: () => _openCamera(field),
+                    child: Container(
+                      width: double.infinity,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.muted.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: theme.colorScheme.border,
+                          width: 1,
+                          style: BorderStyle.solid,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            CupertinoIcons.camera_fill,
+                            size: 48,
+                            color: theme.colorScheme.mutedForeground,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Tap to capture photo',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: theme.colorScheme.foreground,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Use back camera for best results',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: theme.colorScheme.mutedForeground,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Use back camera for best results',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: theme.colorScheme.mutedForeground,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
+                  )
           else
             Column(
               children: [
@@ -448,6 +453,107 @@ class _FormPageViewState extends State<_FormPageView> {
     );
   }
 
+  Widget _buildCameraGalleryOptions(FormFieldModel field, ShadThemeData theme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.muted.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.border,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Choose an option',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: theme.colorScheme.foreground,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              // Camera option
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openCamera(field),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.background,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.border,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          CupertinoIcons.camera_fill,
+                          size: 32,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Camera',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: theme.colorScheme.foreground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Gallery option
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openGallery(field),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.background,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.border,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          CupertinoIcons.photo_fill,
+                          size: 32,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Gallery',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: theme.colorScheme.foreground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _openCamera(FormFieldModel field) async {
     // Pass aspect ratio to photo capture page
     final result = await context.push<File>(
@@ -458,6 +564,93 @@ class _FormPageViewState extends State<_FormPageView> {
       setState(() {
         _capturedPhotos[field.id] = result;
       });
+    }
+  }
+
+  Future<void> _openGallery(FormFieldModel field) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile == null || !mounted) return;
+
+    // Crop the selected image to aspect ratio
+    final croppedFile = await _cropImageToAspectRatio(
+      pickedFile.path,
+      field.aspectRatio,
+    );
+
+    if (croppedFile != null && mounted) {
+      setState(() {
+        _capturedPhotos[field.id] = croppedFile;
+      });
+    }
+  }
+
+  Future<File?> _cropImageToAspectRatio(String imagePath, String? aspectRatioStr) async {
+    try {
+      // Parse aspect ratio
+      double targetAspectRatio = 35 / 45; // Default
+      if (aspectRatioStr != null) {
+        final parts = aspectRatioStr.split(':');
+        if (parts.length == 2) {
+          final width = double.tryParse(parts[0]);
+          final height = double.tryParse(parts[1]);
+          if (width != null && height != null && height != 0) {
+            targetAspectRatio = width / height;
+          }
+        }
+      }
+
+      // Read the image
+      final bytes = await File(imagePath).readAsBytes();
+      var originalImage = img.decodeImage(bytes);
+
+      if (originalImage == null) return File(imagePath);
+
+      // Apply EXIF orientation
+      originalImage = img.bakeOrientation(originalImage);
+
+      // Calculate crop dimensions
+      final currentAspectRatio = originalImage.width / originalImage.height;
+
+      int cropWidth;
+      int cropHeight;
+      int offsetX = 0;
+      int offsetY = 0;
+
+      if (currentAspectRatio > targetAspectRatio) {
+        // Image is too wide, crop the width
+        cropHeight = originalImage.height;
+        cropWidth = (cropHeight * targetAspectRatio).round();
+        offsetX = ((originalImage.width - cropWidth) / 2).round();
+      } else {
+        // Image is too tall, crop the height
+        cropWidth = originalImage.width;
+        cropHeight = (cropWidth / targetAspectRatio).round();
+        offsetY = ((originalImage.height - cropHeight) / 2).round();
+      }
+
+      // Crop the image
+      final croppedImage = img.copyCrop(
+        originalImage,
+        x: offsetX,
+        y: offsetY,
+        width: cropWidth,
+        height: cropHeight,
+      );
+
+      // Save the cropped image
+      final croppedPath = imagePath.replaceAll(
+        RegExp(r'\.(jpg|jpeg|png)$', caseSensitive: false),
+        '_cropped.jpg',
+      );
+      final croppedFile = File(croppedPath);
+      await croppedFile.writeAsBytes(img.encodeJpg(croppedImage, quality: 95));
+
+      return croppedFile;
+    } catch (e) {
+      // Return original file if cropping fails
+      return File(imagePath);
     }
   }
 

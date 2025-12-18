@@ -45,6 +45,7 @@ class FormFieldModel {
   final String? defaultValue;
   final int order;
   final String? aspectRatio; // For file/image fields (e.g., "35:45")
+  final bool accessGallery; // If true, allow gallery access for file fields
 
   const FormFieldModel({
     required this.id,
@@ -59,6 +60,7 @@ class FormFieldModel {
     this.defaultValue,
     required this.order,
     this.aspectRatio,
+    this.accessGallery = false,
   });
 
   factory FormFieldModel.fromJson(Map<String, dynamic> json) {
@@ -81,6 +83,7 @@ class FormFieldModel {
       defaultValue: json['defaultValue'],
       order: json['order'] ?? 0,
       aspectRatio: json['aspectRatio'],
+      accessGallery: json['accessGallery'] ?? false,
     );
   }
 }
